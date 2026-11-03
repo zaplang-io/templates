@@ -1,4 +1,5 @@
 import templates.expression
+import templates.values
 
 struct Segment:
     str kind
@@ -26,15 +27,14 @@ struct Parser:
 
 struct RenderState:
     Template template
-    expression.Budget budget
+    values.Budget budget
     list[str] chunks
-    bool autoescape
 
 def _fail(int64 pos, str message):
-    expression.fail(pos, message)
+    values.fail(pos, message)
 
 def _scan(str source) -> list[Segment]:
-    auto source_length = expression.length(source)
+    auto source_length = values.length(source)
     if source_length > 1048576:
         _fail(0, "source exceeds 1048576 characters")
     list[Segment] result = []
@@ -104,7 +104,7 @@ def _scan(str source) -> list[Segment]:
 def _head(Segment segment) -> str:
     auto text = segment.text.strip()
     auto end = 0
-    auto size = expression.length(text)
+    auto size = values.length(text)
     while end < size and not text[end:end + 1] in [" ", "\t", "\r", "\n"]:
         end = end + 1
     return text[:end]
@@ -212,6 +212,19 @@ def _block(Parser p, list[str] stops, int64 depth) -> list[int64]:
                         segment.pos,
                     ),
                 )
+            elif head == "autoescape":
+                auto offset = segment.text.find(head) + len(head)
+                auto expr_index = _expression(
+                    p,
+                    segment.text[offset:],
+                    segment.pos + offset,
+                )
+                p.cursor = p.cursor + 1
+                auto nested = _block(p, ["endautoescape"], depth + 1)
+                _closing(p, "endautoescape")
+                body.append(
+                    _add(p, "autoescape", "", expr_index, nested, [], segment.pos),
+                )
             elif head == "set":
                 # Locate the assignment separator separately: '=' is not an expression operator.
                 auto offset = segment.text.find("=")
@@ -243,58 +256,31 @@ def compile(str source) -> Template:
     return Template(nodes=parser.nodes, expressions=parser.expressions.nodes, body=body)
 
 def escape(str text) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&#34;").replace(
-        "'",
-        "&#39;",
-    )
+    return values.escape(text)
 
 def _emit(RenderState state, str text, int64 pos):
-    auto size = expression.length(text)
+    auto size = values.length(text)
     if size > 1048576 - state.budget.output:
         _fail(pos, "output exceeds 1048576 characters")
     state.budget.output = state.budget.output + size
     state.chunks.append(text)
 
-def _context(dict[str, JsonValue] source) -> dict[str, JsonValue]:
-    dict[str, JsonValue] result = {}
+def _context(dict[str, values.Value] source) -> dict[str, values.Value]:
+    dict[str, values.Value] result = {}
     for key in source:
         result[key] = source[key]
     return result
 
-def _items(expression.Value value, int64 pos) -> list[JsonValue]:
-    if not value.defined:
-        return []
-    match value.data:
-        case JsonValue.Array(items):
-            return items
-        case JsonValue.Object(fields):
-            list[JsonValue] items = []
-            for key in fields:
-                if len(items) >= 100000:
-                    _fail(pos, "iteration exceeds 100000 items")
-                items.append(JsonValue.Str(key))
-            return items
-        case JsonValue.Str(text):
-            if expression.length(text) > 100000:
-                _fail(pos, "iteration exceeds 100000 items")
-            list[JsonValue] items = []
-            for c in text:
-                items.append(JsonValue.Str(str(c)))
-            return items
-        case _:
-            _fail(pos, "for requires an array, object, string, or undefined")
-    return []
-
 def _render(
     RenderState state,
     list[int64] body,
-    dict[str, JsonValue] context,
+    dict[str, values.Value] context,
     int64 depth,
 ):
     if depth > 64:
         _fail(0, "render nesting exceeds 64")
     for index in body:
-        expression.tick(state.budget)
+        values.tick(state.budget)
         auto node = state.template.nodes[index]
         if node.kind == "text":
             _emit(state, node.text, node.pos)
@@ -306,22 +292,34 @@ def _render(
             state.budget,
         )
         if node.kind == "output":
-            auto text = expression.string(value)
-            if state.autoescape:
-                text = escape(text)
+            values.require(value, state.budget, node.pos)
+            auto text = values.fragment(value, state.budget.autoescape, node.pos)
             _emit(state, text, node.pos)
         elif node.kind == "set":
             # Preserve undefined rather than assigning it the explicit null value.
             if not value.defined:
                 _fail(node.pos, "cannot assign an undefined value")
-            context[node.text] = value.data
+            context[node.text] = value
         elif node.kind == "if":
-            if expression.truth(value):
+            values.require(value, state.budget, node.pos)
+            if values.truth(value):
                 _render(state, node.body, context, depth + 1)
             else:
                 _render(state, node.alternate, context, depth + 1)
+        elif node.kind == "autoescape":
+            auto enabled = False
+            match value.data:
+                case JsonValue.Bool(b):
+                    enabled = b
+                case _:
+                    _fail(node.pos, "autoescape requires a boolean")
+            auto previous = state.budget.autoescape
+            state.budget.autoescape = enabled
+            auto bindings = _context(context)
+            _render(state, node.body, bindings, depth + 1)
+            state.budget.autoescape = previous
         elif node.kind == "for":
-            auto items = _items(value, node.pos)
+            auto items = values.items(value, state.budget, node.pos)
             if len(items) > 100000:
                 _fail(node.pos, "iteration exceeds 100000 items")
             if len(items) == 0:
@@ -339,23 +337,35 @@ def _render(
                     "last": JsonValue.Bool(i == len(items) - 1),
                     "length": JsonValue.Int(len(items)),
                 }
-                bindings["loop"] = JsonValue.Object(loop)
+                bindings["loop"] = values.value(JsonValue.Object(loop))
                 _render(state, node.body, bindings, depth + 1)
 
 def render_compiled(
     Template template,
     dict[str, JsonValue] context,
     bool autoescape = True,
+    bool strict_undefined = False,
 ) -> str:
     auto state = RenderState(
         template=template,
-        budget=expression.Budget(steps=0, output=0),
+        budget=values.Budget(
+            steps=0,
+            output=0,
+            strict=strict_undefined,
+            autoescape=autoescape,
+        ),
         chunks=[],
-        autoescape=autoescape,
     )
-    auto bindings = _context(context)
+    dict[str, values.Value] bindings = {}
+    for key in context:
+        bindings[key] = values.value(context[key])
     _render(state, template.body, bindings, 0)
     return "".join(state.chunks)
 
-def render(str source, dict[str, JsonValue] context, bool autoescape = True) -> str:
-    return render_compiled(compile(source), context, autoescape)
+def render(
+    str source,
+    dict[str, JsonValue] context,
+    bool autoescape = True,
+    bool strict_undefined = False,
+) -> str:
+    return render_compiled(compile(source), context, autoescape, strict_undefined)
