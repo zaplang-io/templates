@@ -160,7 +160,7 @@ def equal(Value a, Value b, Budget budget, int64 depth = 0) -> bool:
                     if len(xs) != len(ys):
                         return False
                     for i in range(len(xs)):
-                        if not equal(value(xs[i]), value(ys[i]), budget, depth + 1):
+                        if not equal(item(a, i), item(b, i), budget, depth + 1):
                             return False
                     return True
                 case _:
@@ -198,8 +198,8 @@ def _contains(Value container, Value needle, Budget budget, int64 pos) -> bool:
                 case _:
                     fail(pos, "object membership requires a string")
         case JsonValue.Array(xs):
-            for item in xs:
-                if equal(value(item), needle, budget):
+            for i in range(len(xs)):
+                if equal(item(container, i), needle, budget):
                     return True
             return False
         case _:

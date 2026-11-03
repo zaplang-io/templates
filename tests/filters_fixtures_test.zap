@@ -758,6 +758,22 @@ def main():
         False,
         True,
     )
+    check(
+        "tojson unicode",
+        "{{value|tojson}}",
+        "{\"value\": {\"é\": \"😀終 \"}}",
+        "{\"\\u00e9\": \"\\ud83d\\ude00\\u7d42\\u2028\"}",
+        False,
+        True,
+    )
+    check(
+        "undefined map test",
+        "{{values|map(attribute='missing')|first is undefined}}",
+        "{\"values\": [{}]}",
+        "True",
+        False,
+        True,
+    )
     bad("unknown filter", "{{value|unknown}}", "{\"value\": 2}", False, True)
     bad("unknown test", "{{value is unknown}}", "{\"value\": 2}", False, True)
     bad("replace arity", "{{value|replace('a')}}", "{\"value\": 2}", False, True)
@@ -776,4 +792,4 @@ def main():
     bad("dictsort type", "{{value|dictsort}}", "{\"value\": 2}", False, True)
     bad("sort mixed", "{{value|sort|join}}", "{\"value\": [1, \"a\"]}", False, True)
     bad("map arguments", "{{value|map|list}}", "{\"value\": 2}", False, True)
-    print("Jinja differential fixtures: 125 PASS")
+    print("Jinja differential fixtures: 127 PASS")

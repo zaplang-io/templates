@@ -173,8 +173,13 @@ def test(
     if name == "number":
         return kind in ["integer", "float", "boolean"]
     if name == "sequence":
+        if not v.defined:
+            return not budget.strict
         return kind in ["sequence", "string", "mapping"]
     if name == "iterable":
+        if not v.defined:
+            values.require(v, budget, pos)
+            return True
         return kind in ["sequence", "string", "mapping"]
     if name == "escaped":
         return v.safe
@@ -470,6 +475,34 @@ def _round(float64 number, int64 precision, str method, int64 pos) -> float64:
             rounded = lower + 1.0
     return rounded / factor
 
+def _hex4(int64 cp) -> str:
+    auto digits = "0123456789abcdef"
+    auto result = ""
+    auto number = cp
+    for i in range(4):
+        auto digit = number % 16
+        result = digits[digit:digit + 1] + result
+        number = number // 16
+    return result
+
+def _ascii_json(str text, values.Budget budget, int64 pos) -> str:
+    list[str] chunks = []
+    auto size = 0
+    for c in text:
+        values.tick(budget)
+        auto cp = ord(c)
+        auto chunk = str(c)
+        if cp > 65535:
+            auto n = cp - 65536
+            chunk = "\\u" + _hex4(55296 + n // 1024) + "\\u" + _hex4(56320 + n % 1024)
+        elif cp > 127:
+            chunk = "\\u" + _hex4(cp)
+        size = size + len(chunk)
+        if size > 1048576:
+            values.fail(pos, "filter tojson: output limit")
+        chunks.append(chunk)
+    return "".join(chunks)
+
 # JSON for HTML script bodies: deterministic keys and HTML-sensitive escapes.
 def _json(JsonValue data, values.Budget budget, int64 pos, int64 depth = 0) -> str:
     values.tick(budget)
@@ -545,7 +578,7 @@ def apply(
     if name == "tojson":
         if not v.defined:
             values.fail(pos, "filter tojson: undefined value")
-        auto text = _json(v.data, budget, pos).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026").replace(
+        auto text = _ascii_json(_json(v.data, budget, pos), budget, pos).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026").replace(
             "'",
             "\\u0027",
         )

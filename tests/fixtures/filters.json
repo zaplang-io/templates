@@ -1364,6 +1364,32 @@
       "error": null
     },
     {
+      "name": "tojson unicode",
+      "source": "{{value|tojson}}",
+      "context": {
+        "value": {
+          "é": "😀終 "
+        }
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "{\"\\u00e9\": \"\\ud83d\\ude00\\u7d42\\u2028\"}",
+      "error": null
+    },
+    {
+      "name": "undefined map test",
+      "source": "{{values|map(attribute='missing')|first is undefined}}",
+      "context": {
+        "values": [
+          {}
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True",
+      "error": null
+    },
+    {
       "name": "unknown filter",
       "source": "{{value|unknown}}",
       "context": {

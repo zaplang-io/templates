@@ -97,6 +97,8 @@ case('strict tests', '{{missing is defined}}/{{missing is undefined}}/{{missing 
 for source in ['{{missing}}','{% if missing %}yes{% endif %}','{{missing == none}}','{{missing|length}}','{% for x in missing %}x{% endfor %}']:
     case('strict error '+source, source, strict=True,error=True)
 case('tojson', '{{value|tojson}}', {'value':{'z':'</script> & \'','a':[1,True,None]}})
+case('tojson unicode', '{{value|tojson}}', {'value':{'é':'😀終\u2028'}})
+case('undefined map test', "{{values|map(attribute='missing')|first is undefined}}", {'values':[{}]})
 for name,source in [
     ('unknown filter','{{value|unknown}}'),('unknown test','{{value is unknown}}'),
     ('replace arity',"{{value|replace('a')}}"),('unknown keyword','{{value|sort(typo=true)}}'),
