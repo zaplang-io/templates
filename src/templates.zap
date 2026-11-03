@@ -34,13 +34,14 @@ def _fail(int64 pos, str message):
     expression.fail(pos, message)
 
 def _scan(str source) -> list[Segment]:
-    if len(source) > 1048576:
+    auto source_length = expression.length(source)
+    if source_length > 1048576:
         _fail(0, "source exceeds 1048576 characters")
     list[Segment] result = []
     auto i = 0
     auto start = 0
     auto trim_next = False
-    while i < len(source):
+    while i < source_length:
         auto opener = source[i:i + 2]
         if not opener in ["{{", "{%", "{#"]:
             i = i + 1
@@ -50,7 +51,7 @@ def _scan(str source) -> list[Segment]:
             text = text.lstrip()
         auto pos = i
         i = i + 2
-        auto left_trim = i < len(source) and source[i:i + 1] == "-"
+        auto left_trim = i < source_length and source[i:i + 1] == "-"
         if left_trim:
             text = text.rstrip()
             i = i + 1
@@ -66,7 +67,7 @@ def _scan(str source) -> list[Segment]:
             kind = "comment"
         auto content = i
         auto quote = ""
-        while i < len(source):
+        while i < source_length:
             auto c = source[i:i + 1]
             if kind != "comment":
                 if len(quote) > 0:
@@ -82,7 +83,7 @@ def _scan(str source) -> list[Segment]:
             elif source[i:i + 2] == closer:
                 break
             i = i + 1
-        if i >= len(source):
+        if i >= source_length:
             _fail(pos, "unterminated " + kind)
         trim_next = i > content and source[i - 1:i] == "-"
         auto end = i
@@ -97,13 +98,14 @@ def _scan(str source) -> list[Segment]:
         tail = tail.lstrip()
     if len(tail) > 0:
         result.append(Segment(kind="text", text=tail, pos=start))
-    result.append(Segment(kind="end", text="", pos=len(source)))
+    result.append(Segment(kind="end", text="", pos=source_length))
     return result
 
 def _head(Segment segment) -> str:
     auto text = segment.text.strip()
     auto end = 0
-    while end < len(text) and not text[end:end + 1] in [" ", "\t", "\r", "\n"]:
+    auto size = expression.length(text)
+    while end < size and not text[end:end + 1] in [" ", "\t", "\r", "\n"]:
         end = end + 1
     return text[:end]
 
@@ -247,9 +249,10 @@ def escape(str text) -> str:
     )
 
 def _emit(RenderState state, str text, int64 pos):
-    if len(text) > 1048576 - state.budget.output:
+    auto size = expression.length(text)
+    if size > 1048576 - state.budget.output:
         _fail(pos, "output exceeds 1048576 characters")
-    state.budget.output = state.budget.output + len(text)
+    state.budget.output = state.budget.output + size
     state.chunks.append(text)
 
 def _context(dict[str, JsonValue] source) -> dict[str, JsonValue]:
@@ -272,7 +275,7 @@ def _items(expression.Value value, int64 pos) -> list[JsonValue]:
                 items.append(JsonValue.Str(key))
             return items
         case JsonValue.Str(text):
-            if len(text) > 100000:
+            if expression.length(text) > 100000:
                 _fail(pos, "iteration exceeds 100000 items")
             list[JsonValue] items = []
             for c in text:

@@ -33,6 +33,13 @@ def tick(Budget budget):
     if budget.steps > 100000:
         fail(0, "evaluation exceeds 100000 steps")
 
+# Zap's current len(str) reports UTF-8 bytes, while slicing uses codepoints.
+def length(str text) -> int64:
+    auto count = 0
+    for c in text:
+        count = count + 1
+    return count
+
 def _ident_start(str c) -> bool:
     return c == "_" or c >= "a" and c <= "z" or c >= "A" and c <= "Z"
 
@@ -49,8 +56,9 @@ def identifier(str s) -> bool:
 
 def tokenize(str source, int64 base) -> list[Token]:
     list[Token] tokens = []
+    auto source_length = length(source)
     auto i = 0
-    while i < len(source):
+    while i < source_length:
         auto start = i
         auto c = source[i:i + 1]
         if c in [" ", "\t", "\r", "\n"]:
@@ -60,11 +68,11 @@ def tokenize(str source, int64 base) -> list[Token]:
             auto quote = c
             auto text = ""
             i = i + 1
-            while i < len(source) and source[i:i + 1] != quote:
+            while i < source_length and source[i:i + 1] != quote:
                 auto ch = source[i:i + 1]
                 i = i + 1
                 if ch == "\\":
-                    if i >= len(source):
+                    if i >= source_length:
                         fail(base + start, "unterminated string escape")
                     ch = source[i:i + 1]
                     i = i + 1
@@ -77,13 +85,13 @@ def tokenize(str source, int64 base) -> list[Token]:
                     elif not ch in ["\\", "'", "\""]:
                         fail(base + i - 1, "unsupported string escape")
                 text = text + ch
-            if i >= len(source):
+            if i >= source_length:
                 fail(base + start, "unterminated string")
             i = i + 1
             tokens.append(Token(text=text, kind="string", pos=base + start))
         elif _ident_start(str(c)):
             i = i + 1
-            while i < len(source):
+            while i < source_length:
                 auto ch = source[i:i + 1]
                 if not _ident_start(ch) and not (ch >= "0" and ch <= "9"):
                     break
@@ -91,15 +99,15 @@ def tokenize(str source, int64 base) -> list[Token]:
             tokens.append(Token(text=source[start:i], kind="name", pos=base + start))
         elif c >= "0" and c <= "9":
             i = i + 1
-            while i < len(source) and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
+            while i < source_length and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
                 i = i + 1
             if i - start > 1 and c == "0":
                 fail(base + start, "invalid leading zero in numeric literal")
-            if i < len(source) and source[i:i + 1] == ".":
+            if i < source_length and source[i:i + 1] == ".":
                 i = i + 1
-                if i >= len(source) or source[i:i + 1] < "0" or source[i:i + 1] > "9":
+                if i >= source_length or source[i:i + 1] < "0" or source[i:i + 1] > "9":
                     fail(base + start, "expected digits after decimal point")
-                while i < len(source) and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
+                while i < source_length and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
                     i = i + 1
             tokens.append(Token(text=source[start:i], kind="number", pos=base + start))
         else:
@@ -112,7 +120,7 @@ def tokenize(str source, int64 base) -> list[Token]:
             if not op in ["==", "!=", "<=", ">=", "//", "<", ">", "+", "-", "*", "/", "%", "~", "(", ")", "[", "]", "."]:
                 fail(base + start, "unsupported expression token: " + op)
             tokens.append(Token(text=op, kind="symbol", pos=base + start))
-    tokens.append(Token(text="", kind="end", pos=base + len(source)))
+    tokens.append(Token(text="", kind="end", pos=base + source_length))
     return tokens
 
 def _peek(Parser p) -> Token:
@@ -328,12 +336,13 @@ def lookup(Value base, Value key, int64 pos) -> Value:
                 case _:
                     fail(pos, "array index must be an integer")
         case JsonValue.Str(s):
+            auto size = length(s)
             match key.data:
                 case JsonValue.Int(i):
                     auto index = i
                     if index < 0:
-                        index = index + len(s)
-                    if index >= 0 and index < len(s):
+                        index = index + size
+                    if index >= 0 and index < size:
                         return value(JsonValue.Str(s[index:index + 1]))
                 case _:
                     fail(pos, "string index must be an integer")
@@ -457,7 +466,7 @@ def _arithmetic(str op, Value a, Value b, int64 pos) -> Value:
     if op == "~":
         auto first = string(a)
         auto second = string(b)
-        if len(first) + len(second) > 1048576:
+        if length(first) + length(second) > 1048576:
             fail(pos, "expression string exceeds 1048576 characters")
         return value(JsonValue.Str(first + second))
     if op == "+":
