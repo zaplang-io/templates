@@ -93,8 +93,12 @@ def tokenize(str source, int64 base) -> list[Token]:
             i = i + 1
             while i < len(source) and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
                 i = i + 1
+            if i - start > 1 and c == "0":
+                fail(base + start, "invalid leading zero in numeric literal")
             if i < len(source) and source[i:i + 1] == ".":
                 i = i + 1
+                if i >= len(source) or source[i:i + 1] < "0" or source[i:i + 1] > "9":
+                    fail(base + start, "expected digits after decimal point")
                 while i < len(source) and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
                     i = i + 1
             tokens.append(Token(text=source[start:i], kind="number", pos=base + start))

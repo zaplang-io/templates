@@ -7,7 +7,8 @@ def bad_syntax(str source):
     except Exception as e:
         assert "TemplateError at character " in str(e)
         caught = True
-    assert caught
+    if not caught:
+        raise "expected syntax error: " + source
 
 def bad_render(str source):
     auto caught = False
@@ -17,7 +18,8 @@ def bad_render(str source):
     except Exception as e:
         assert "TemplateError at character " in str(e)
         caught = True
-    assert caught
+    if not caught:
+        raise "expected rendering error: " + source
 
 def main():
     bad_syntax("{{")
