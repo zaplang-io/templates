@@ -27,7 +27,6 @@ case('super escaping', {'base':'{% block x %}<b>{{html}}</b>{% endblock %}','mai
 case('nested blocks', {'base':'{% block outer %}A{% block inner %}I{% endblock %}Z{% endblock %}','main':"{% extends 'base' %}{% block inner %}X{% endblock %}"})
 case('nested override super', {'base':'{% block outer %}A{% block inner %}I{% endblock %}Z{% endblock %}','main':"{% extends 'base' %}{% block outer %}B{{super()}}Y{% endblock %}{% block inner %}X{% endblock %}"})
 case('dynamic parent setup', {'base':'{% block x %}A{% endblock %}','main':"{% set parent = 'base' %}{% extends parent %}{% block x %}{{value}}{% endblock %}"},context={'value':'<b>'})
-case('base loop blocks', {'base':'{% for x in values %}{% block cell scoped %}{{x}}{% endblock %}{% endfor %}','main':"{% extends 'base' %}{% block cell %}[{{x}}]{% endblock %}"},context={'values':[1,2]}) if False else None
 case('include context', {'main':"{% set x = 'local' %}{% include 'part' %}",'part':'{{x}}/{{html}}'},context={'html':'<b>'})
 case('include without context', {'main':"{% set x = 2 %}{% include 'part' without context %}",'part':"{{x|default('missing')}}"})
 case('include explicit context', {'main':"{% include part with context %}",'part':'{{value}}'},context={'part':'part','value':3})

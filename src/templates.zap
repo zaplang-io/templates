@@ -139,7 +139,7 @@ def _head(Segment segment) -> str:
     auto text = segment.text.strip()
     auto end = 0
     auto size = values.length(text)
-    while end < size and not text[end:end + 1] in [" ", "\t", "\r", "\n"]:
+    while end < size and not text[end:end + 1] in [" ", "\t", "\r", "\n", "("]:
         end = end + 1
     return text[:end]
 
