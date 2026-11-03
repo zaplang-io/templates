@@ -806,6 +806,59 @@
       "escaping": true,
       "expected": null,
       "error": "UndefinedError"
+    },
+    {
+      "name": "unscoped loop block",
+      "files": {
+        "main": "{% for x in values %}{% block cell %}{{x|default(\"none\")}}{% endblock %}{% endfor %}"
+      },
+      "root": "main",
+      "context": {
+        "values": [
+          1,
+          2
+        ]
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "nonenone",
+      "error": null
+    },
+    {
+      "name": "scoped loop block override",
+      "files": {
+        "base": "{% for x in values %}{% block cell scoped %}{{x}}{% endblock %}{% endfor %}",
+        "main": "{% extends 'base' %}{% block cell %}[{{x}}]{% endblock %}"
+      },
+      "root": "main",
+      "context": {
+        "values": [
+          1,
+          2
+        ]
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "[1][2]",
+      "error": null
+    },
+    {
+      "name": "scoped super loop",
+      "files": {
+        "base": "{% for x in values %}{% block cell scoped %}{{x}}{% endblock %}{% endfor %}",
+        "main": "{% extends 'base' %}{% block cell %}[{{super()}}]{% endblock %}"
+      },
+      "root": "main",
+      "context": {
+        "values": [
+          1,
+          2
+        ]
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "[1][2]",
+      "error": null
     }
   ]
 }

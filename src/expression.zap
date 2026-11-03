@@ -35,25 +35,26 @@ def identifier(str s) -> bool:
 
 def tokenize(str source, int64 base) -> list[Token]:
     list[Token] tokens = []
-    auto source_length = values.length(source)
+    auto characters = values.points(source)
+    auto source_length = len(characters)
     auto i = 0
     while i < source_length:
         auto start = i
-        auto c = source[i:i + 1]
+        auto c = characters[i]
         if c in [" ", "\t", "\r", "\n"]:
             i = i + 1
             continue
         if c == "'" or c == "\"":
             auto quote = c
-            auto text = ""
+            list[str] text = []
             i = i + 1
-            while i < source_length and source[i:i + 1] != quote:
-                auto ch = source[i:i + 1]
+            while i < source_length and characters[i] != quote:
+                auto ch = characters[i]
                 i = i + 1
                 if ch == "\\":
                     if i >= source_length:
                         values.fail(base + start, "unterminated string escape")
-                    ch = source[i:i + 1]
+                    ch = characters[i]
                     i = i + 1
                     if ch == "n":
                         ch = "\n"
@@ -63,34 +64,42 @@ def tokenize(str source, int64 base) -> list[Token]:
                         ch = "\r"
                     elif not ch in ["\\", "'", "\""]:
                         values.fail(base + i - 1, "unsupported string escape")
-                text = text + ch
+                text.append(ch)
             if i >= source_length:
                 values.fail(base + start, "unterminated string")
             i = i + 1
-            tokens.append(Token(text=text, kind="string", pos=base + start))
+            tokens.append(Token(text="".join(text), kind="string", pos=base + start))
         elif _ident_start(str(c)):
             i = i + 1
             while i < source_length:
-                auto ch = source[i:i + 1]
+                auto ch = characters[i]
                 if not _ident_start(ch) and not (ch >= "0" and ch <= "9"):
                     break
                 i = i + 1
-            tokens.append(Token(text=source[start:i], kind="name", pos=base + start))
+            tokens.append(
+                Token(text="".join(characters[start:i]), kind="name", pos=base + start),
+            )
         elif c >= "0" and c <= "9":
             i = i + 1
-            while i < source_length and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
+            while i < source_length and characters[i] >= "0" and characters[i] <= "9":
                 i = i + 1
             if i - start > 1 and c == "0":
                 values.fail(base + start, "invalid leading zero in numeric literal")
-            if i < source_length and source[i:i + 1] == ".":
+            if i < source_length and characters[i] == ".":
                 i = i + 1
-                if i >= source_length or source[i:i + 1] < "0" or source[i:i + 1] > "9":
+                if i >= source_length or characters[i] < "0" or characters[i] > "9":
                     values.fail(base + start, "expected digits after decimal point")
-                while i < source_length and source[i:i + 1] >= "0" and source[i:i + 1] <= "9":
+                while i < source_length and characters[i] >= "0" and characters[i] <= "9":
                     i = i + 1
-            tokens.append(Token(text=source[start:i], kind="number", pos=base + start))
+            tokens.append(
+                Token(
+                    text="".join(characters[start:i]),
+                    kind="number",
+                    pos=base + start,
+                ),
+            )
         else:
-            auto op = source[i:i + 2]
+            auto op = "".join(characters[i:i + 2])
             if op in ["==", "!=", "<=", ">=", "//"]:
                 i = i + 2
             else:

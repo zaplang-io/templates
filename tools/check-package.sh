@@ -29,6 +29,11 @@ def main():
     assert templates.render("{{name|safe|escape}}", context) == "<Ada>"
     assert templates.render("{{missing|default('ok')}}", context, True, True) == "ok"
     assert templates.render("{{name|length}}", context) == "5"
+    dict[str, str] pages = {"base": "<{% block x %}base{% endblock %}>", "page": "{% extends 'base' %}{% block x %}{{name}}{% endblock %}"}
+    auto env = templates.environment(pages)
+    assert templates.render_named(env, "page", context) == "<&lt;Ada&gt;>"
+    templates.set_source(env, "page", "{% macro f(x='ok') %}[{{x}}]{% endmacro %}{{f()}}")
+    assert templates.render_named(env, "page", context) == "[ok]"
     print("package consumer: PASS")
 ZAP
 (cd "$build" && "$zap" zenv create --no-venv && ZAP_ZENV="$build/zenv" "$zap" run src/main.zap)

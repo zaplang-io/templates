@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% import 'components.html' as ui %}
+{% block title %}People — {{ super() }}{% endblock %}
+{% block body %}
+{% call ui.card(title) %}
+<ul>{% for user in users %}{% include 'row.html' %}{% endfor %}</ul>
+{% endcall %}
+{% endblock %}

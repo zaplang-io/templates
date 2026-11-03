@@ -585,4 +585,31 @@ def main():
         True,
         True,
     )
-    print("Jinja composition fixtures: 61 PASS")
+    check(
+        "unscoped loop block",
+        "{\"main\": \"{% for x in values %}{% block cell %}{{x|default(\\\"none\\\")}}{% endblock %}{% endfor %}\"}",
+        "main",
+        "{\"values\": [1, 2]}",
+        "nonenone",
+        False,
+        True,
+    )
+    check(
+        "scoped loop block override",
+        "{\"base\": \"{% for x in values %}{% block cell scoped %}{{x}}{% endblock %}{% endfor %}\", \"main\": \"{% extends 'base' %}{% block cell %}[{{x}}]{% endblock %}\"}",
+        "main",
+        "{\"values\": [1, 2]}",
+        "[1][2]",
+        False,
+        True,
+    )
+    check(
+        "scoped super loop",
+        "{\"base\": \"{% for x in values %}{% block cell scoped %}{{x}}{% endblock %}{% endfor %}\", \"main\": \"{% extends 'base' %}{% block cell %}[{{super()}}]{% endblock %}\"}",
+        "main",
+        "{\"values\": [1, 2]}",
+        "[1][2]",
+        False,
+        True,
+    )
+    print("Jinja composition fixtures: 64 PASS")
