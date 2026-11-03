@@ -16,3 +16,26 @@ jobs:
       - run: sh tools/run-tests.sh
       - run: sh tools/check-package.sh
       - run: sh tools/check-example.sh
+  fixture-regeneration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.0
+      - name: Install pinned generation-only oracle
+        run: |
+          python3 -m venv "$RUNNER_TEMP/fixture-oracle"
+          "$RUNNER_TEMP/fixture-oracle/bin/pip" install -r tools/fixtures-requirements.txt
+      - name: Regenerate and compare fixtures
+        run: |
+          cat > "$RUNNER_TEMP/zap-fixture-format" <<'SH'
+          #!/bin/sh
+          exec docker run --rm \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" \
+            -v "${TMPDIR:-/tmp}:${TMPDIR:-/tmp}" \
+            -w "$GITHUB_WORKSPACE" \
+            ghcr.io/zaplang-io/zap@sha256:593d82a7938f1fc7f4fb1ead916309089ee17537a1c83ec797bb97a55a82faec \
+            zap "$@"
+          SH
+          chmod +x "$RUNNER_TEMP/zap-fixture-format"
+          FIXTURE_PYTHON="$RUNNER_TEMP/fixture-oracle/bin/python" \
+            ZAP="$RUNNER_TEMP/zap-fixture-format" sh tools/check-fixtures.sh
