@@ -1,0 +1,571 @@
+{
+  "jinja": "3.1.6",
+  "markupsafe": "3.0.3",
+  "cases": [
+    {
+      "name": "syntax 0",
+      "source": "Plain 😀é終 text",
+      "context": {},
+      "expected": "Plain 😀é終 text",
+      "error": null
+    },
+    {
+      "name": "syntax 1",
+      "source": "",
+      "context": {},
+      "expected": "",
+      "error": null
+    },
+    {
+      "name": "syntax 2",
+      "source": "{{ \"é😀終\" }}",
+      "context": {},
+      "expected": "é😀終",
+      "error": null
+    },
+    {
+      "name": "syntax 3",
+      "source": "{{ \"}}\" }}",
+      "context": {},
+      "expected": "}}",
+      "error": null
+    },
+    {
+      "name": "syntax 4",
+      "source": "{{ \"%}\" }}",
+      "context": {},
+      "expected": "%}",
+      "error": null
+    },
+    {
+      "name": "syntax 5",
+      "source": "{{ \"and\" }}:{{ \"or\" }}:{{ \"not\" }}",
+      "context": {},
+      "expected": "and:or:not",
+      "error": null
+    },
+    {
+      "name": "syntax 6",
+      "source": "{{ \"a\\nb\\t\\\"\" }}",
+      "context": {},
+      "expected": "a\nb\t&#34;",
+      "error": null
+    },
+    {
+      "name": "syntax 7",
+      "source": "A{# {{ignored}} {% ignored %} #}B",
+      "context": {},
+      "expected": "AB",
+      "error": null
+    },
+    {
+      "name": "syntax 8",
+      "source": "A \n{{- \"B\" -}} \n C",
+      "context": {},
+      "expected": "ABC",
+      "error": null
+    },
+    {
+      "name": "syntax 9",
+      "source": "A \n{#- ignored -#} \n B",
+      "context": {},
+      "expected": "AB",
+      "error": null
+    },
+    {
+      "name": "syntax 10",
+      "source": "A \n{% if true -%}\n B {%- endif %} C",
+      "context": {},
+      "expected": "A \nB C",
+      "error": null
+    },
+    {
+      "name": "syntax 11",
+      "source": "{% if false %}A{% elif true %}B{% else %}C{% endif %}",
+      "context": {},
+      "expected": "B",
+      "error": null
+    },
+    {
+      "name": "syntax 12",
+      "source": "{% if true %}{% if false %}A{% else %}B{% endif %}{% endif %}",
+      "context": {},
+      "expected": "B",
+      "error": null
+    },
+    {
+      "name": "syntax 13",
+      "source": "{% set x=2 %}{% if true %}{% set x=x+1 %}{% endif %}{{x}}",
+      "context": {},
+      "expected": "3",
+      "error": null
+    },
+    {
+      "name": "syntax 14",
+      "source": "{{ true }}:{{ false }}:{{ none }}",
+      "context": {},
+      "expected": "True:False:None",
+      "error": null
+    },
+    {
+      "name": "syntax 15",
+      "source": "{{ 1+2*3 }}:{{ (1+2)*3 }}",
+      "context": {},
+      "expected": "7:9",
+      "error": null
+    },
+    {
+      "name": "syntax 16",
+      "source": "{{ -7//3 }}:{{ -7%3 }}:{{ 7%-3 }}",
+      "context": {},
+      "expected": "-3:2:-2",
+      "error": null
+    },
+    {
+      "name": "syntax 17",
+      "source": "{{ 3/2 }}:{{ 4/2 }}",
+      "context": {},
+      "expected": "1.5:2.0",
+      "error": null
+    },
+    {
+      "name": "syntax 18",
+      "source": "{{ not 1>2 }}:{{ not true and false }}:{{ not (true and false) }}",
+      "context": {},
+      "expected": "True:False:True",
+      "error": null
+    },
+    {
+      "name": "syntax 19",
+      "source": "{{ false and (1/0) }}:{{ true or (1/0) }}",
+      "context": {},
+      "expected": "False:True",
+      "error": null
+    },
+    {
+      "name": "syntax 20",
+      "source": "{{ 1<2<3 }}:{{ 3<2<(1/0) }}",
+      "context": {},
+      "expected": "True:False",
+      "error": null
+    },
+    {
+      "name": "syntax 21",
+      "source": "{{ 1 != 2 }}:{{ 1 <= 1 }}:{{ 2 >= 1 }}",
+      "context": {},
+      "expected": "True:True:True",
+      "error": null
+    },
+    {
+      "name": "syntax 22",
+      "source": "{{ \"A\" < \"B\" }}:{{ \"x\" ~ 1 ~ true }}",
+      "context": {},
+      "expected": "True:x1True",
+      "error": null
+    },
+    {
+      "name": "syntax 23",
+      "source": "{{ missing }}:{{ missing or \"fallback\" }}",
+      "context": {},
+      "expected": ":fallback",
+      "error": null
+    },
+    {
+      "name": "context 0",
+      "source": "{{ user.name }}/{{user[\"name\"]}}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "Ada/Ada",
+      "error": null
+    },
+    {
+      "name": "context 1",
+      "source": "{{items[-1]}}/{{items[99]}}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "3/",
+      "error": null
+    },
+    {
+      "name": "context 2",
+      "source": "{{text[1]}}/{{text[-1]}}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "😀/終",
+      "error": null
+    },
+    {
+      "name": "context 3",
+      "source": "{{ 2 in items }}:{{ 7 not in items }}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "True:True",
+      "error": null
+    },
+    {
+      "name": "context 4",
+      "source": "{{ \"name\" in user }}:{{ \"da\" in user.name }}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "True:True",
+      "error": null
+    },
+    {
+      "name": "context 5",
+      "source": "{% for x in items %}{{loop.index}}={{x}};{% else %}empty{% endfor %}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "1=1;2=2;3=3;",
+      "error": null
+    },
+    {
+      "name": "context 6",
+      "source": "{% for x in empty %}X{% else %}empty{% endfor %}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "empty",
+      "error": null
+    },
+    {
+      "name": "context 7",
+      "source": "{% for x in missing %}X{% else %}missing{% endfor %}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "missing",
+      "error": null
+    },
+    {
+      "name": "context 8",
+      "source": "{% for x in text %}{{x}}{% endfor %}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "é😀終",
+      "error": null
+    },
+    {
+      "name": "context 9",
+      "source": "{% for x in user %}{{x}};{% endfor %}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "name;age;",
+      "error": null
+    },
+    {
+      "name": "context 10",
+      "source": "{% set x=9 %}{% for x in items %}{{x}}{% set x=7 %}{% endfor %}{{x}}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "1239",
+      "error": null
+    },
+    {
+      "name": "context 11",
+      "source": "{% set y=9 %}{% for x in items %}{{y}}{% set y=7 %}{% endfor %}{{y}}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "9999",
+      "error": null
+    },
+    {
+      "name": "context 12",
+      "source": "{% for x in items %}{% for y in items %}{{loop.index}}{% endfor %}{{loop.index}}{% endfor %}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "123112321233",
+      "error": null
+    },
+    {
+      "name": "context 13",
+      "source": "{% for x in items %}{{loop.first}}/{{loop.last}}/{{loop.length}}/{{loop.revindex0}};{% endfor %}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "True/False/3/2;False/False/3/1;False/True/3/0;",
+      "error": null
+    },
+    {
+      "name": "context 14",
+      "source": "{% set x=1 %}{% for y in empty %}X{% else %}{% set x=2 %}{{x}}{% endfor %}{{x}}",
+      "context": {
+        "user": {
+          "name": "Ada",
+          "age": 25
+        },
+        "items": [
+          1,
+          2,
+          3
+        ],
+        "empty": [],
+        "text": "é😀終"
+      },
+      "expected": "21",
+      "error": null
+    },
+    {
+      "name": "invalid 0",
+      "source": "{{",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 1",
+      "source": "{%",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 2",
+      "source": "{{ \"broken }}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 3",
+      "source": "{{ 1+ }}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 4",
+      "source": "{% if true %}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 5",
+      "source": "{% if false %}{{1+}}{% endif %}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 6",
+      "source": "{% unknown %}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 7",
+      "source": "{% else %}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 8",
+      "source": "{% for x in values %}{% endif %}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 9",
+      "source": "{{value[1}}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 10",
+      "source": "{{value.}}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 11",
+      "source": "{{(1+2}}",
+      "context": {},
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "invalid 12",
+      "source": "{{1/0}}",
+      "context": {},
+      "expected": null,
+      "error": "ZeroDivisionError"
+    },
+    {
+      "name": "invalid 13",
+      "source": "{{1%0}}",
+      "context": {},
+      "expected": null,
+      "error": "ZeroDivisionError"
+    },
+    {
+      "name": "invalid 14",
+      "source": "{{1 in 2}}",
+      "context": {},
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "invalid 15",
+      "source": "{% for x in 1 %}x{% endfor %}",
+      "context": {},
+      "expected": null,
+      "error": "TypeError"
+    }
+  ]
+}
