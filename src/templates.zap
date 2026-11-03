@@ -261,7 +261,7 @@ def _composition(Parser p, Segment segment, str head, int64 depth) -> int64:
         auto cursor = separator + 1
         while cursor < len(tokens) - 1:
             auto name = tokens[cursor]
-            if name.kind != "name" or not expression.identifier(name.text) or name.text.startswith("_"):
+            if name.kind != "name" or not expression.identifier(name.text) or head == "from" and name.text.startswith("_"):
                 _fail(name.pos, "invalid or private imported name")
             auto local = name.text
             cursor = cursor + 1
@@ -900,8 +900,6 @@ def _invoke(
         state.budget.output = size
         state.calls = state.calls - 1
         return values.marked(result, state.budget.autoescape)
-    if len(arguments) > len(macro.parameters):
-        _fail(pos, "macro " + macro.name + ": too many arguments")
     auto calling_policy = state.budget.autoescape
     auto previous_blocks = state.blocks
     state.budget.autoescape = macro.autoescape
@@ -917,6 +915,8 @@ def _invoke(
                     pos,
                     "macro " + macro.name + ": positional argument after keyword",
                 )
+            if i >= len(macro.parameters):
+                _fail(pos, "macro " + macro.name + ": too many arguments")
             key = macro.parameters[i]
         else:
             named = True

@@ -227,6 +227,20 @@ def _expr(Parser p, int64 minimum, int64 depth) -> int64:
         auto next = _peek(p)
         if next.kind == "symbol" and next.text == "(":
             auto arguments = _arguments(p, depth + 1)
+            auto named = False
+            list[str] seen = []
+            for name in arguments.names:
+                if name == "":
+                    if named:
+                        values.fail(
+                            next.pos,
+                            "macro call: positional argument after keyword",
+                        )
+                else:
+                    named = True
+                    if name in seen:
+                        values.fail(next.pos, "macro call: duplicate argument " + name)
+                    seen.append(name)
             list[int64] children = [left]
             for argument in arguments.nodes:
                 children.append(argument)
