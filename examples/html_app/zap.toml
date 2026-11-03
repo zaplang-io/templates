@@ -1,0 +1,5 @@
+[package]
+name = "template_html_app"
+version = "0.1.0"
+[dependencies]
+templates = { path = "../.." }

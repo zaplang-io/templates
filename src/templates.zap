@@ -53,6 +53,7 @@ struct Macro:
     int64 block
     bool autoescape
     list[Block] blocks
+    dict[str, values.Value] base_context
 
 struct RenderState:
     Environment environment
@@ -63,6 +64,7 @@ struct RenderState:
     list[Block] blocks
     list[str] active
     int64 calls
+    dict[str, values.Value] base_context
 
 def _fail(int64 pos, str message):
     values.fail(pos, message)
@@ -287,7 +289,8 @@ def _composition(Parser p, Segment segment, str head, int64 depth) -> int64:
         return _add(p, head, flags, expr_index, [], [], segment.pos, exports)
     if head == "block":
         auto tokens = expression.tokenize(text, base)
-        if len(tokens) != 2 or tokens[0].kind != "name" or not expression.identifier(tokens[0].text):
+        auto scoped = len(tokens) == 3 and tokens[1].kind == "name" and tokens[1].text == "scoped"
+        if len(tokens) != 2 and not scoped or tokens[0].kind != "name" or not expression.identifier(tokens[0].text):
             _fail(segment.pos, "expected block <name>")
         auto name = tokens[0].text
         p.cursor = p.cursor + 1
@@ -296,7 +299,10 @@ def _composition(Parser p, Segment segment, str head, int64 depth) -> int64:
         if ending.kind != "tag" or not ending.text.strip() in ["endblock", "endblock " + name]:
             _fail(ending.pos, "expected endblock " + name)
         p.cursor = p.cursor + 1
-        return _add(p, head, name, -1, body, [], segment.pos)
+        list[str] flags = []
+        if scoped:
+            flags.append("scoped")
+        return _add(p, head, name, -1, body, [], segment.pos, flags)
     if head == "macro":
         auto tokens = expression.tokenize(text, base)
         if len(tokens) < 4 or tokens[0].kind != "name" or not expression.identifier(tokens[0].text):
@@ -803,6 +809,7 @@ def _state(Environment env) -> RenderState:
         blocks=[],
         active=[],
         calls=0,
+        base_context={},
     )
 
 def render_named(Environment env, str name, dict[str, JsonValue] context) -> str:
@@ -850,6 +857,7 @@ def _macro(
             block=-1,
             autoescape=state.budget.autoescape,
             blocks=state.blocks,
+            base_context=state.base_context,
         ),
     )
 
@@ -902,6 +910,8 @@ def _invoke(
         return values.marked(result, state.budget.autoescape)
     auto calling_policy = state.budget.autoescape
     auto previous_blocks = state.blocks
+    auto previous_base = state.base_context
+    state.base_context = macro.base_context
     state.budget.autoescape = macro.autoescape
     state.blocks = macro.blocks
     auto bindings = _context(macro.closure)
@@ -946,6 +956,7 @@ def _invoke(
         state.calls = state.calls - 1
         state.budget.autoescape = calling_policy
         state.blocks = previous_blocks
+        state.base_context = previous_base
         return values.marked(result, calling_policy)
     except Exception as e:
         _fail(pos, "macro " + macro.name + " in " + macro.template.name + ": " + str(e))
@@ -977,6 +988,7 @@ def _render_block(
                     block=i,
                     autoescape=state.budget.autoescape,
                     blocks=state.blocks,
+                    base_context=state.base_context,
                 ),
             )
             _render(
@@ -1046,7 +1058,10 @@ def _render_composition(
     if node.kind == "macro":
         context[node.text] = _macro(state, template, node, context)
     elif node.kind == "block":
-        _render_block(state, node.text, -1, context, depth + 1)
+        auto bindings = state.base_context
+        if "scoped" in node.names:
+            bindings = context
+        _render_block(state, node.text, -1, bindings, depth + 1)
     elif node.kind == "include":
         auto name = normalize_name(
             _name(
@@ -1087,6 +1102,8 @@ def _execute(
     if depth > 32:
         _fail(0, "template composition exceeds 32 levels")
     auto saved_blocks = state.blocks
+    auto saved_base = state.base_context
+    state.base_context = context
     auto saved_policy = state.budget.autoescape
     state.budget.autoescape = state.environment.autoescape
     state.blocks = []
@@ -1138,6 +1155,7 @@ def _execute(
         _render(state, current, current.body, context, depth + 1)
         state.active = state.active[:active_count]
         state.blocks = saved_blocks
+        state.base_context = saved_base
         state.budget.autoescape = saved_policy
         list[str] exported = []
         for key in declared:
