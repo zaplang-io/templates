@@ -33,7 +33,7 @@ def main():
     bad_syntax("{{ 1. }}")
     bad_syntax("{{ user. }}")
     bad_syntax("{{ user[1 }}")
-    bad_syntax("{{ user() }}")
+    bad_render("{{ user() }}")
     bad_syntax("{{ name | unknown }}")
     bad_syntax("{% unknown %}")
     bad_syntax("{% else %}")

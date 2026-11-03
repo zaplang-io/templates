@@ -225,6 +225,35 @@ def _expr(Parser p, int64 minimum, int64 depth) -> int64:
         values.fail(token.pos, "expected expression")
     while True:
         auto next = _peek(p)
+        if next.kind == "symbol" and next.text == "(":
+            auto arguments = _arguments(p, depth + 1)
+            auto named = False
+            list[str] seen = []
+            for name in arguments.names:
+                if name == "":
+                    if named:
+                        values.fail(
+                            next.pos,
+                            "macro call: positional argument after keyword",
+                        )
+                else:
+                    named = True
+                    if name in seen:
+                        values.fail(next.pos, "macro call: duplicate argument " + name)
+                    seen.append(name)
+            list[int64] children = [left]
+            for argument in arguments.nodes:
+                children.append(argument)
+            left = _node(
+                p,
+                "call",
+                "",
+                JsonValue.Null,
+                children,
+                next.pos,
+                arguments.names,
+            )
+            continue
         if next.kind == "symbol" and next.text == ".":
             auto dot = _take(p)
             auto key = _take(p)
@@ -316,93 +345,37 @@ def parse(Parser p, str source, int64 base) -> int64:
         values.fail(_peek(p).pos, "unexpected expression token: " + _peek(p).text)
     return root
 
-def evaluate(
-    list[Node] nodes,
-    int64 index,
-    dict[str, values.Value] context,
-    values.Budget budget,
-    int64 depth = 0,
-) -> values.Value:
-    values.tick(budget)
-    if depth > 128:
-        values.fail(0, "expression evaluation nesting exceeds 128")
-    auto node = nodes[index]
-    if node.kind == "literal":
-        return values.value(node.value)
-    if node.kind == "name":
-        if node.text in context:
-            return context[node.text]
-        return values.undefined()
-    if node.kind == "lookup":
-        auto base = evaluate(nodes, node.children[0], context, budget, depth + 1)
-        auto key = evaluate(nodes, node.children[1], context, budget, depth + 1)
-        return values.lookup(base, key, node.pos, budget)
-    if node.kind in ["filter", "test"]:
-        auto input = evaluate(nodes, node.children[0], context, budget, depth + 1)
-        list[values.Value] arguments = []
-        for i in range(1, len(node.children)):
-            arguments.append(
-                evaluate(nodes, node.children[i], context, budget, depth + 1),
-            )
-        if node.kind == "filter":
-            try:
-                return filters.apply(
-                    node.text,
-                    input,
-                    arguments,
-                    node.names,
-                    budget,
-                    node.pos,
-                )
-            except Exception as e:
-                values.fail(node.pos, "filter " + node.text + ": " + str(e))
-        auto name = node.text
-        auto negate = name.startswith("not:")
-        if negate:
-            name = name[4:]
-        try:
-            auto matched = filters.test(name, input, arguments, budget, node.pos)
-            return values.value(JsonValue.Bool(matched != negate))
-        except Exception as e:
-            values.fail(node.pos, "test " + name + ": " + str(e))
-    if node.kind == "unary":
-        auto operand = evaluate(nodes, node.children[0], context, budget, depth + 1)
-        values.require(operand, budget, node.pos)
-        if node.text == "not":
-            return values.value(JsonValue.Bool(not values.truth(operand)))
-        if node.text == "+":
-            auto checked = values.number(operand, node.pos)
-            return operand
-        return values.arithmetic(
-            "-",
-            values.value(JsonValue.Int(0)),
-            operand,
-            node.pos,
-            budget,
-        )
-    if node.kind == "compare":
-        auto operators = node.text.split("\n")
-        auto left = evaluate(nodes, node.children[0], context, budget, depth + 1)
-        for i in range(len(operators)):
-            auto right = evaluate(
-                nodes,
-                node.children[i + 1],
-                context,
-                budget,
-                depth + 1,
-            )
-            if not values.compare(operators[i], left, right, budget, node.pos):
-                return values.value(JsonValue.Bool(False))
-            left = right
-        return values.value(JsonValue.Bool(True))
-    auto left = evaluate(nodes, node.children[0], context, budget, depth + 1)
-    if node.text in ["and", "or"]:
-        values.require(left, budget, node.pos)
-    if node.text == "and" and not values.truth(left):
-        return left
-    if node.text == "or" and values.truth(left):
-        return left
-    auto right = evaluate(nodes, node.children[1], context, budget, depth + 1)
-    if node.text in ["and", "or"]:
-        return right
-    return values.arithmetic(node.text, left, right, node.pos, budget)
+
+struct Parameters:
+    list[str] names
+    list[int64] defaults
+
+def parameters(Parser p, str source, int64 base) -> Parameters:
+    p.tokens = tokenize(source, base)
+    p.cursor = 0
+    _expect(p, "(")
+    list[str] names = []
+    list[int64] defaults = []
+    auto optional = False
+    while _peek(p).text != ")" or _peek(p).kind != "symbol":
+        auto name = _take(p)
+        if name.kind != "name" or not identifier(name.text) or name.text in names:
+            values.fail(name.pos, "invalid or duplicate parameter")
+        if len(names) >= 16:
+            values.fail(name.pos, "macro exceeds 16 parameters")
+        auto default_index = -1
+        if _peek(p).text == "=" and _peek(p).kind == "symbol":
+            auto separator = _take(p)
+            default_index = _expr(p, 1, 0)
+            optional = True
+        elif optional:
+            values.fail(name.pos, "required parameter after default")
+        names.append(name.text)
+        defaults.append(default_index)
+        if _peek(p).text != "," or _peek(p).kind != "symbol":
+            break
+        auto comma = _take(p)
+    _expect(p, ")")
+    if _peek(p).kind != "end":
+        values.fail(_peek(p).pos, "unexpected parameter token")
+    return Parameters(names=names, defaults=defaults)

@@ -33,7 +33,7 @@ def signature(str name) -> list[str]:
     return ["!unknown"]
 
 def test_signature(str name) -> list[str]:
-    if name in ["defined", "undefined", "none", "string", "number", "sequence", "mapping", "even", "odd", "boolean", "integer", "float", "true", "false", "iterable", "escaped", "lower", "upper"]:
+    if name in ["defined", "undefined", "none", "string", "number", "sequence", "mapping", "even", "odd", "boolean", "integer", "float", "true", "false", "iterable", "escaped", "lower", "upper", "callable"]:
         return []
     if name in ["equalto", "eq", "ne", "lt", "le", "gt", "ge", "in", "divisibleby"]:
         return ["other"]
@@ -133,6 +133,10 @@ def _int(values.Value v, int64 pos, str label) -> int64:
     return 0
 
 def _kind(values.Value v) -> str:
+    if v.callable >= 0:
+        return "macro"
+    if v.namespace:
+        return "namespace"
     if not v.defined:
         return "undefined"
     match v.data:
@@ -163,6 +167,8 @@ def test(
         names.append("")
     validate_test(name, names, pos)
     auto kind = _kind(v)
+    if name == "callable":
+        return v.callable >= 0
     if name == "defined":
         return v.defined
     if name == "undefined":

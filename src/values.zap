@@ -4,6 +4,9 @@ struct Value:
     JsonValue data
     bool defined
     bool safe
+    int64 callable
+    bool namespace
+    dict[str, int64] members
     list[bool] item_safe
     list[bool] item_defined
 
@@ -29,18 +32,32 @@ def length(str text) -> int64:
     return count
 
 def value(JsonValue data) -> Value:
-    return Value(data=data, defined=True, safe=False, item_safe=[], item_defined=[])
+    return Value(
+        data=data,
+        defined=True,
+        safe=False,
+        callable=-1,
+        namespace=False,
+        members={},
+        item_safe=[],
+        item_defined=[],
+    )
 
 def undefined() -> Value:
     return Value(
         data=JsonValue.Null,
         defined=False,
         safe=False,
+        callable=-1,
+        namespace=False,
+        members={},
         item_safe=[],
         item_defined=[],
     )
 
 def truth(Value v) -> bool:
+    if v.callable >= 0 or v.namespace:
+        return True
     if not v.defined:
         return False
     match v.data:
@@ -60,6 +77,8 @@ def truth(Value v) -> bool:
             return len(fields) > 0
 
 def string(Value v) -> str:
+    if v.callable >= 0 or v.namespace:
+        fail(0, "cannot print a macro or imported namespace")
     if not v.defined:
         return ""
     match v.data:
@@ -95,6 +114,8 @@ def _integer(Value v) -> bool:
 
 def lookup(Value base, Value key, int64 pos, Budget budget) -> Value:
     require(base, budget, pos)
+    if base.namespace:
+        fail(pos, "namespace members require direct dot or item lookup")
     require(key, budget, pos)
     if not base.defined or not key.defined:
         return undefined()

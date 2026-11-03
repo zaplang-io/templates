@@ -1,0 +1,811 @@
+{
+  "jinja": "3.1.6",
+  "markupsafe": "3.0.3",
+  "cases": [
+    {
+      "name": "basic inheritance",
+      "files": {
+        "base": "<h1>{% block title %}Base{% endblock %}</h1>{% block body %}body{% endblock %}",
+        "main": "{% extends 'base' %}{% block title %}Child{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "<h1>Child</h1>body",
+      "error": null
+    },
+    {
+      "name": "named closing block",
+      "files": {
+        "main": "{% block x %}X{% endblock x %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "X",
+      "error": null
+    },
+    {
+      "name": "three level super",
+      "files": {
+        "base": "[{% block x %}A{% endblock %}]",
+        "middle": "{% extends 'base' %}{% block x %}B{{super()}}{% endblock %}",
+        "main": "{% extends 'middle' %}{% block x %}C{{super()}}/{{super()}}{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "[CBA/BA]",
+      "error": null
+    },
+    {
+      "name": "super escaping",
+      "files": {
+        "base": "{% block x %}<b>{{html}}</b>{% endblock %}",
+        "main": "{% extends 'base' %}{% block x %}<i>{{super()}}</i>{% endblock %}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<script>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "<i><b>&lt;script&gt;</b></i>",
+      "error": null
+    },
+    {
+      "name": "nested blocks",
+      "files": {
+        "base": "{% block outer %}A{% block inner %}I{% endblock %}Z{% endblock %}",
+        "main": "{% extends 'base' %}{% block inner %}X{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "AXZ",
+      "error": null
+    },
+    {
+      "name": "nested override super",
+      "files": {
+        "base": "{% block outer %}A{% block inner %}I{% endblock %}Z{% endblock %}",
+        "main": "{% extends 'base' %}{% block outer %}B{{super()}}Y{% endblock %}{% block inner %}X{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "BAXZY",
+      "error": null
+    },
+    {
+      "name": "dynamic parent setup",
+      "files": {
+        "base": "{% block x %}A{% endblock %}",
+        "main": "{% set parent = 'base' %}{% extends parent %}{% block x %}{{value}}{% endblock %}"
+      },
+      "root": "main",
+      "context": {
+        "value": "<b>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "&lt;b&gt;",
+      "error": null
+    },
+    {
+      "name": "include context",
+      "files": {
+        "main": "{% set x = 'local' %}{% include 'part' %}",
+        "part": "{{x}}/{{html}}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<b>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "local/&lt;b&gt;",
+      "error": null
+    },
+    {
+      "name": "include without context",
+      "files": {
+        "main": "{% set x = 2 %}{% include 'part' without context %}",
+        "part": "{{x|default('missing')}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "missing",
+      "error": null
+    },
+    {
+      "name": "include explicit context",
+      "files": {
+        "main": "{% include part with context %}",
+        "part": "{{value}}"
+      },
+      "root": "main",
+      "context": {
+        "part": "part",
+        "value": 3
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "3",
+      "error": null
+    },
+    {
+      "name": "nested includes",
+      "files": {
+        "main": "M{% include 'a' %}",
+        "a": "A{% include 'b' %}",
+        "b": "B{{x}}"
+      },
+      "root": "main",
+      "context": {
+        "x": 1
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "MAB1",
+      "error": null
+    },
+    {
+      "name": "include isolation",
+      "files": {
+        "main": "{% set x = 1 %}{% include 'part' %}{{x}}",
+        "part": "{% set x = 2 %}{{x}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "21",
+      "error": null
+    },
+    {
+      "name": "include inherited",
+      "files": {
+        "main": "{% include 'child' %}",
+        "base": "<{% block x %}A{% endblock %}>",
+        "child": "{% extends 'base' %}{% block x %}B{{super()}}{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "<BA>",
+      "error": null
+    },
+    {
+      "name": "include blocks isolated",
+      "files": {
+        "main": "{% extends 'base' %}{% block x %}M{% include 'part' %}{{super()}}{% endblock %}",
+        "base": "{% block x %}A{% endblock %}",
+        "part": "{% block x %}P{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "MPA",
+      "error": null
+    },
+    {
+      "name": "ignore missing",
+      "files": {
+        "main": "A{% include 'absent' ignore missing %}B"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "AB",
+      "error": null
+    },
+    {
+      "name": "ignore missing with context",
+      "files": {
+        "main": "A{% include 'absent' ignore missing with context %}B"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "AB",
+      "error": null
+    },
+    {
+      "name": "ignore syntax error",
+      "files": {
+        "main": "{% include 'bad' ignore missing %}",
+        "bad": "{% if %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "missing include",
+      "files": {
+        "main": "{% include 'absent' %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TemplateNotFound"
+    },
+    {
+      "name": "macro literal",
+      "files": {
+        "main": "{% macro hello() %}<b>Hello</b>{% endmacro %}{{hello()}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "<b>Hello</b>",
+      "error": null
+    },
+    {
+      "name": "macro positional keyword",
+      "files": {
+        "main": "{% macro f(a,b='B') %}{{a}}/{{b}}{% endmacro %}{{f('A')}};{{f(b='Y',a='X')}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "A/B;X/Y",
+      "error": null
+    },
+    {
+      "name": "macro context closure",
+      "files": {
+        "main": "{% set x='A' %}{% macro f() %}{{x}}{% endmacro %}{% set x='B' %}{{f()}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "B",
+      "error": null
+    },
+    {
+      "name": "macro default context",
+      "files": {
+        "main": "{% set x='A' %}{% macro f(a=x) %}{{a}}{% endmacro %}{% set x='B' %}{{f()}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "B",
+      "error": null
+    },
+    {
+      "name": "macro dependent default",
+      "files": {
+        "main": "{% macro f(a,b=a) %}{{a}}/{{b}}{% endmacro %}{{f('A')}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "A/A",
+      "error": null
+    },
+    {
+      "name": "macro scopes",
+      "files": {
+        "main": "{% set x=1 %}{% macro f() %}{% set x=2 %}{{x}}{% endmacro %}{{f()}}{{x}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "21",
+      "error": null
+    },
+    {
+      "name": "macro escaping",
+      "files": {
+        "main": "{% macro f(x) %}<b>{{x}}</b>{% endmacro %}{{f(html)}}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<i>&"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "<b>&lt;i&gt;&amp;</b>",
+      "error": null
+    },
+    {
+      "name": "macro safe argument",
+      "files": {
+        "main": "{% macro f(x) %}<b>{{x}}</b>{% endmacro %}{{f(html|safe)}}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<i>&"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "<b><i>&</b>",
+      "error": null
+    },
+    {
+      "name": "macro text mode",
+      "files": {
+        "main": "{% macro f(x) %}<b>{{x}}</b>{% endmacro %}{{f(html)}}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<i>"
+      },
+      "strict": false,
+      "escaping": false,
+      "expected": "<b><i></b>",
+      "error": null
+    },
+    {
+      "name": "macro called in autoescape block",
+      "files": {
+        "main": "{% macro f(x) %}<b>{{x}}</b>{% endmacro %}{% autoescape false %}{{f(html)}}{% endautoescape %}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<i>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "<b>&lt;i&gt;</b>",
+      "error": null
+    },
+    {
+      "name": "macro undefined parameter",
+      "files": {
+        "main": "{% macro f(x) %}[{{x}}]{% endmacro %}{{f()}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "[]",
+      "error": null
+    },
+    {
+      "name": "macro strict parameter",
+      "files": {
+        "main": "{% macro f(x) %}[{{x}}]{% endmacro %}{{f()}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": true,
+      "escaping": true,
+      "expected": null,
+      "error": "UndefinedError"
+    },
+    {
+      "name": "macro alias",
+      "files": {
+        "main": "{% macro f() %}X{% endmacro %}{% set alias=f %}{{alias()}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "X",
+      "error": null
+    },
+    {
+      "name": "macro recursion finite",
+      "files": {
+        "main": "{% macro f(n) %}{{n}}{% if n > 0 %}{{f(n-1)}}{% endif %}{% endmacro %}{{f(3)}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "3210",
+      "error": null
+    },
+    {
+      "name": "macro callable type",
+      "files": {
+        "main": "{% macro f() %}x{% endmacro %}{{f is callable}}/{{f is none}}/{% if f %}yes{% endif %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "True/False/yes",
+      "error": null
+    },
+    {
+      "name": "two macros",
+      "files": {
+        "main": "{% macro a(x) %}[{{x}}]{% endmacro %}{% macro b(x) %}{{a(x)}}{% endmacro %}{{b(html)}}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<b>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "[&lt;b&gt;]",
+      "error": null
+    },
+    {
+      "name": "import default isolation",
+      "files": {
+        "main": "{% import 'lib' as lib %}{{lib.show()}}",
+        "lib": "{% macro show() %}{{secret|default('isolated')}}{% endmacro %}"
+      },
+      "root": "main",
+      "context": {
+        "secret": "visible"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "isolated",
+      "error": null
+    },
+    {
+      "name": "import with context",
+      "files": {
+        "main": "{% import 'lib' as lib with context %}{{lib.show()}}",
+        "lib": "{% macro show() %}{{secret}}{% endmacro %}"
+      },
+      "root": "main",
+      "context": {
+        "secret": "<b>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "&lt;b&gt;",
+      "error": null
+    },
+    {
+      "name": "from alias",
+      "files": {
+        "main": "{% from 'lib' import show as f, other %}{{f()}}/{{other()}}",
+        "lib": "{% macro show() %}A{% endmacro %}{% macro other() %}B{% endmacro %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "A/B",
+      "error": null
+    },
+    {
+      "name": "from with context",
+      "files": {
+        "main": "{% from 'lib' import show with context %}{{show()}}",
+        "lib": "{% macro show() %}{{secret}}{% endmacro %}"
+      },
+      "root": "main",
+      "context": {
+        "secret": "<b>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "&lt;b&gt;",
+      "error": null
+    },
+    {
+      "name": "import exported assignment",
+      "files": {
+        "main": "{% import 'lib' as lib %}{{lib.x}}/{{lib.f()}}",
+        "lib": "{% set x='<b>'|safe %}{% macro f() %}{{x}}{% endmacro %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "<b>/<b>",
+      "error": null
+    },
+    {
+      "name": "import top level output hidden",
+      "files": {
+        "main": "A{% import 'lib' as lib %}{{lib.f()}}B",
+        "lib": "HIDDEN{% macro f() %}F{% endmacro %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "AFB",
+      "error": null
+    },
+    {
+      "name": "import nested",
+      "files": {
+        "main": "{% import 'a' as a %}{{a.f()}}",
+        "a": "{% import 'b' as b %}{% macro f() %}A{{b.f()}}{% endmacro %}",
+        "b": "{% macro f() %}B{% endmacro %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "AB",
+      "error": null
+    },
+    {
+      "name": "import name bracket",
+      "files": {
+        "main": "{% import 'lib' as lib %}{{lib['f']()}}",
+        "lib": "{% macro f() %}F{% endmacro %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "F",
+      "error": null
+    },
+    {
+      "name": "empty namespace lookup",
+      "files": {
+        "main": "{% import 'lib' as lib %}{{lib.missing|default('none')}}",
+        "lib": ""
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "none",
+      "error": null
+    },
+    {
+      "name": "empty namespace truth",
+      "files": {
+        "main": "{% import 'lib' as lib %}{% if lib %}yes{% endif %}",
+        "lib": ""
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "yes",
+      "error": null
+    },
+    {
+      "name": "private import",
+      "files": {
+        "main": "{% from 'lib' import _hidden %}",
+        "lib": "{% macro _hidden() %}X{% endmacro %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TemplateAssertionError"
+    },
+    {
+      "name": "caller block",
+      "files": {
+        "main": "{% macro wrapper() %}<b>{{caller()}}</b>{% endmacro %}{% call wrapper() %}{{html}}{% endcall %}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<i>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "<b>&lt;i&gt;</b>",
+      "error": null
+    },
+    {
+      "name": "caller arguments",
+      "files": {
+        "main": "{% macro wrapper() %}[{{caller('Ada')}}]{% endmacro %}{% call(name) wrapper() %}Hello {{name}}{% endcall %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "[Hello Ada]",
+      "error": null
+    },
+    {
+      "name": "caller outer lexical context",
+      "files": {
+        "main": "{% set x='outer' %}{% macro wrapper() %}{% set x='inner' %}{{caller()}}{% endmacro %}{% call wrapper() %}{{x}}{% endcall %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "outer",
+      "error": null
+    },
+    {
+      "name": "caller imported",
+      "files": {
+        "main": "{% import 'lib' as lib %}{% call lib.wrap() %}{{html}}{% endcall %}",
+        "lib": "{% macro wrap() %}<b>{{caller()}}</b>{% endmacro %}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<i>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "<b>&lt;i&gt;</b>",
+      "error": null
+    },
+    {
+      "name": "caller nested",
+      "files": {
+        "main": "{% macro wrap() %}[{{caller()}}]{% endmacro %}{% call wrap() %}A{% call wrap() %}B{% endcall %}C{% endcall %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": "[A[B]C]",
+      "error": null
+    },
+    {
+      "name": "macro unknown keyword",
+      "files": {
+        "main": "{% macro f(x) %}{{x}}{% endmacro %}{{f(unknown=1)}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "macro excess positional",
+      "files": {
+        "main": "{% macro f(x) %}{{x}}{% endmacro %}{{f(1,2)}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "macro duplicate argument",
+      "files": {
+        "main": "{% macro f(x) %}{{x}}{% endmacro %}{{f(1,x=2)}}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "bad macro parameter order",
+      "files": {
+        "main": "{% macro f(x=1,y) %}{{x}}{% endmacro %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "duplicate block",
+      "files": {
+        "main": "{% block x %}A{% endblock %}{% block x %}B{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TemplateAssertionError"
+    },
+    {
+      "name": "mismatched endblock",
+      "files": {
+        "main": "{% block x %}A{% endblock y %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "TemplateSyntaxError"
+    },
+    {
+      "name": "missing super",
+      "files": {
+        "main": "{% block x %}{{super()}}{% endblock %}"
+      },
+      "root": "main",
+      "context": {},
+      "strict": false,
+      "escaping": true,
+      "expected": null,
+      "error": "UndefinedError"
+    },
+    {
+      "name": "include own escaping policy",
+      "files": {
+        "main": "{% autoescape false %}{% include 'part' %}{% endautoescape %}",
+        "part": "{{html}}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<b>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "&lt;b&gt;",
+      "error": null
+    },
+    {
+      "name": "macro defined in false block",
+      "files": {
+        "main": "{% autoescape false %}{% macro f() %}<b>{{html}}</b>{% endmacro %}{{f()}}{% endautoescape %}"
+      },
+      "root": "main",
+      "context": {
+        "html": "<i>"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "<b><i></b>",
+      "error": null
+    },
+    {
+      "name": "import globals not exported",
+      "files": {
+        "main": "{% import 'lib' as lib with context %}{{lib.secret|default('hidden')}}",
+        "lib": "{% macro f() %}F{% endmacro %}"
+      },
+      "root": "main",
+      "context": {
+        "secret": "private"
+      },
+      "strict": false,
+      "escaping": true,
+      "expected": "hidden",
+      "error": null
+    },
+    {
+      "name": "from globals not exported",
+      "files": {
+        "main": "{% from 'lib' import secret with context %}{{secret}}",
+        "lib": ""
+      },
+      "root": "main",
+      "context": {
+        "secret": "private"
+      },
+      "strict": true,
+      "escaping": true,
+      "expected": null,
+      "error": "UndefinedError"
+    }
+  ]
+}

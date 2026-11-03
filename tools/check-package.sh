@@ -25,6 +25,10 @@ def main():
     auto page = templates.compile("Hello {{name}}")
     assert templates.render_compiled(page, context) == "Hello &lt;Ada&gt;"
     assert templates.render("{{2 + 3}}", context) == "5"
+    assert templates.render("{{name|safe}}", context) == "<Ada>"
+    assert templates.render("{{name|safe|escape}}", context) == "<Ada>"
+    assert templates.render("{{missing|default('ok')}}", context, True, True) == "ok"
+    assert templates.render("{{name|length}}", context) == "5"
     print("package consumer: PASS")
 ZAP
 (cd "$build" && "$zap" zenv create --no-venv && ZAP_ZENV="$build/zenv" "$zap" run src/main.zap)
