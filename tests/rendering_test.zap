@@ -43,7 +43,12 @@ def main():
     assert templates.render("{% set v = 5 %}{% for x in empty %}bad{% else %}{% set v = 9 %}{{v}}{% endfor %}{{v}}", context) == "95"
     assert templates.render("{{9223372036854775807 > 9223372036854775806}}", context) == "True"
     assert templates.render("{{9007199254740993 == 9007199254740992.0}}", context) == "False"
-    assert templates.render("{{name[-1]}}:{{items[99]}}:{{missing == other}}", context) == "&gt;::True"
+    auto indexed = templates.render(
+        "{{name[-1]}}:{{items[99]}}:{{missing == other}}",
+        context,
+    )
+    if indexed != "&gt;::True":
+        raise "unexpected indexed/undefined result: " + indexed
     auto compiled = templates.compile("{{value}}")
     dict[str, JsonValue] first = {"value": JsonValue.Int(1)}
     dict[str, JsonValue] second = {"value": JsonValue.Int(2)}
