@@ -1,0 +1,1502 @@
+{
+  "jinja": "3.1.6",
+  "markupsafe": "3.0.3",
+  "cases": [
+    {
+      "name": "escape",
+      "source": "{{ value|escape }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": " &lt;b&gt;hello &amp; bye&lt;/b&gt; ",
+      "error": null
+    },
+    {
+      "name": "e",
+      "source": "{{ value|e }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": " &lt;b&gt;hello &amp; bye&lt;/b&gt; ",
+      "error": null
+    },
+    {
+      "name": "safe",
+      "source": "{{ value|safe }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": " <b>hello & bye</b> ",
+      "error": null
+    },
+    {
+      "name": "upper",
+      "source": "{{ value|upper }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": " &lt;B&gt;HELLO &amp; BYE&lt;/B&gt; ",
+      "error": null
+    },
+    {
+      "name": "lower",
+      "source": "{{ value|lower }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": " &lt;b&gt;hello &amp; bye&lt;/b&gt; ",
+      "error": null
+    },
+    {
+      "name": "title",
+      "source": "{{ value|title }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": " &lt;B&gt;hello &amp; Bye&lt;/b&gt; ",
+      "error": null
+    },
+    {
+      "name": "trim",
+      "source": "{{ value|trim }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;b&gt;hello &amp; bye&lt;/b&gt;",
+      "error": null
+    },
+    {
+      "name": "length",
+      "source": "{{ value|length }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "20",
+      "error": null
+    },
+    {
+      "name": "count",
+      "source": "{{ value|count }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "20",
+      "error": null
+    },
+    {
+      "name": "string",
+      "source": "{{ value|string }}",
+      "context": {
+        "value": " <b>hello & bye</b> "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": " &lt;b&gt;hello &amp; bye&lt;/b&gt; ",
+      "error": null
+    },
+    {
+      "name": "unicode length",
+      "source": "{{value|length}}/{{value|reverse}}",
+      "context": {
+        "value": "é😀終"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "3/終😀é",
+      "error": null
+    },
+    {
+      "name": "title words",
+      "source": "{{value|title}}",
+      "context": {
+        "value": "hello-world (NEW) [TEST]"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "Hello-World (New) [Test]",
+      "error": null
+    },
+    {
+      "name": "trim characters",
+      "source": "{{value|trim('xy')}}",
+      "context": {
+        "value": "xyHello yx"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "Hello ",
+      "error": null
+    },
+    {
+      "name": "replace",
+      "source": "{{value|replace('ab','<',2)}}",
+      "context": {
+        "value": "ababab"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;&lt;ab",
+      "error": null
+    },
+    {
+      "name": "replace empty",
+      "source": "{{value|replace('', '-', 2)}}",
+      "context": {
+        "value": "abc"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "-a-bc",
+      "error": null
+    },
+    {
+      "name": "replace zero",
+      "source": "{{value|replace('a', 'b', 0)}}",
+      "context": {
+        "value": "aaa"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "aaa",
+      "error": null
+    },
+    {
+      "name": "default absent",
+      "source": "{{missing|default('<fallback>')}}",
+      "context": {},
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;fallback&gt;",
+      "error": null
+    },
+    {
+      "name": "default null",
+      "source": "{{value|default('fallback')}}",
+      "context": {
+        "value": null
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "None",
+      "error": null
+    },
+    {
+      "name": "default boolean",
+      "source": "{{value|d('fallback', true)}}",
+      "context": {
+        "value": 0
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "fallback",
+      "error": null
+    },
+    {
+      "name": "default keyword",
+      "source": "{{missing|default(boolean=true, default_value='yes')}}",
+      "context": {},
+      "strict": false,
+      "autoescape": true,
+      "expected": "yes",
+      "error": null
+    },
+    {
+      "name": "first last",
+      "source": "{{values|first}}/{{values|last}}",
+      "context": {
+        "values": [
+          "<a>",
+          "<z>"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;a&gt;/&lt;z&gt;",
+      "error": null
+    },
+    {
+      "name": "empty first",
+      "source": "{{values|first|default('empty')}}",
+      "context": {
+        "values": []
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "empty",
+      "error": null
+    },
+    {
+      "name": "string list",
+      "source": "{{value|list|join(',')}}",
+      "context": {
+        "value": "é😀終"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "é,😀,終",
+      "error": null
+    },
+    {
+      "name": "mapping list",
+      "source": "{{value|list|join(',')}}",
+      "context": {
+        "value": {
+          "b": 1,
+          "a": 2
+        }
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "b,a",
+      "error": null
+    },
+    {
+      "name": "join",
+      "source": "{{values|join('<>')}}",
+      "context": {
+        "values": [
+          "<b>",
+          "&"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;b&gt;&lt;&gt;&amp;",
+      "error": null
+    },
+    {
+      "name": "join attr",
+      "source": "{{values|join(', ', attribute='name')}}",
+      "context": {
+        "values": [
+          {
+            "name": "A"
+          },
+          {
+            "name": "<B>"
+          }
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "A, &lt;B&gt;",
+      "error": null
+    },
+    {
+      "name": "sort",
+      "source": "{{values|sort|join(',')}}",
+      "context": {
+        "values": [
+          "b",
+          "A",
+          "a",
+          "C"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "A,a,b,C",
+      "error": null
+    },
+    {
+      "name": "sort reverse sensitive",
+      "source": "{{values|sort(reverse=true, case_sensitive=true)|join(',')}}",
+      "context": {
+        "values": [
+          "b",
+          "A",
+          "a",
+          "C"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "b,a,C,A",
+      "error": null
+    },
+    {
+      "name": "sort attribute",
+      "source": "{{values|sort(attribute='age')|map(attribute='name')|join(',')}}",
+      "context": {
+        "values": [
+          {
+            "name": "B",
+            "age": 2
+          },
+          {
+            "name": "A",
+            "age": 1
+          }
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "A,B",
+      "error": null
+    },
+    {
+      "name": "reverse list",
+      "source": "{{values|reverse|join(',')}}",
+      "context": {
+        "values": [
+          1,
+          2,
+          3
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "3,2,1",
+      "error": null
+    },
+    {
+      "name": "dictsort keys",
+      "source": "{% for pair in value|dictsort %}{{pair[0]}}={{pair[1]}};{% endfor %}",
+      "context": {
+        "value": {
+          "b": 2,
+          "A": 3,
+          "a": 1
+        }
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "A=3;a=1;b=2;",
+      "error": null
+    },
+    {
+      "name": "dictsort values",
+      "source": "{% for pair in value|dictsort(by='value', reverse=true) %}{{pair[0]}};{% endfor %}",
+      "context": {
+        "value": {
+          "b": 2,
+          "a": 3,
+          "c": 1
+        }
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "a;b;c;",
+      "error": null
+    },
+    {
+      "name": "int '42'",
+      "source": "{{value|int}}",
+      "context": {
+        "value": "42"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "42",
+      "error": null
+    },
+    {
+      "name": "int '-42'",
+      "source": "{{value|int}}",
+      "context": {
+        "value": "-42"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "-42",
+      "error": null
+    },
+    {
+      "name": "int '+42'",
+      "source": "{{value|int}}",
+      "context": {
+        "value": "+42"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "42",
+      "error": null
+    },
+    {
+      "name": "int ' 3.9 '",
+      "source": "{{value|int}}",
+      "context": {
+        "value": " 3.9 "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "3",
+      "error": null
+    },
+    {
+      "name": "int 'invalid'",
+      "source": "{{value|int}}",
+      "context": {
+        "value": "invalid"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "0",
+      "error": null
+    },
+    {
+      "name": "int None",
+      "source": "{{value|int}}",
+      "context": {
+        "value": null
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "0",
+      "error": null
+    },
+    {
+      "name": "int True",
+      "source": "{{value|int}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "1",
+      "error": null
+    },
+    {
+      "name": "int 3.9",
+      "source": "{{value|int}}",
+      "context": {
+        "value": 3.9
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "3",
+      "error": null
+    },
+    {
+      "name": "float '3.5'",
+      "source": "{{value|float}}",
+      "context": {
+        "value": "3.5"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "3.5",
+      "error": null
+    },
+    {
+      "name": "float '-3.5'",
+      "source": "{{value|float}}",
+      "context": {
+        "value": "-3.5"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "-3.5",
+      "error": null
+    },
+    {
+      "name": "float ' +2.25 '",
+      "source": "{{value|float}}",
+      "context": {
+        "value": " +2.25 "
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "2.25",
+      "error": null
+    },
+    {
+      "name": "float 'invalid'",
+      "source": "{{value|float}}",
+      "context": {
+        "value": "invalid"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "0.0",
+      "error": null
+    },
+    {
+      "name": "float None",
+      "source": "{{value|float}}",
+      "context": {
+        "value": null
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "0.0",
+      "error": null
+    },
+    {
+      "name": "float True",
+      "source": "{{value|float}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "1.0",
+      "error": null
+    },
+    {
+      "name": "float 4",
+      "source": "{{value|float}}",
+      "context": {
+        "value": 4
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "4.0",
+      "error": null
+    },
+    {
+      "name": "int base",
+      "source": "{{value|int(base=16)}}",
+      "context": {
+        "value": "0xff"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "255",
+      "error": null
+    },
+    {
+      "name": "int fallback",
+      "source": "{{value|int(default=7)}}",
+      "context": {
+        "value": "broken"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "7",
+      "error": null
+    },
+    {
+      "name": "float fallback",
+      "source": "{{value|float(7)}}",
+      "context": {
+        "value": "broken"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "7",
+      "error": null
+    },
+    {
+      "name": "abs",
+      "source": "{{value|abs}}",
+      "context": {
+        "value": -12
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "12",
+      "error": null
+    },
+    {
+      "name": "round -3.5",
+      "source": "{{value|round}}",
+      "context": {
+        "value": -3.5
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "-4.0",
+      "error": null
+    },
+    {
+      "name": "round -2.5",
+      "source": "{{value|round}}",
+      "context": {
+        "value": -2.5
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "-2.0",
+      "error": null
+    },
+    {
+      "name": "round 2.5",
+      "source": "{{value|round}}",
+      "context": {
+        "value": 2.5
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "2.0",
+      "error": null
+    },
+    {
+      "name": "round 3.5",
+      "source": "{{value|round}}",
+      "context": {
+        "value": 3.5
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "4.0",
+      "error": null
+    },
+    {
+      "name": "round 2.25",
+      "source": "{{value|round}}",
+      "context": {
+        "value": 2.25
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "2.0",
+      "error": null
+    },
+    {
+      "name": "round 2.75",
+      "source": "{{value|round}}",
+      "context": {
+        "value": 2.75
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "3.0",
+      "error": null
+    },
+    {
+      "name": "round precision",
+      "source": "{{value|round(1)}}/{{value|round(1,'ceil')}}/{{value|round(1,'floor')}}",
+      "context": {
+        "value": 2.25
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "2.2/2.3/2.2",
+      "error": null
+    },
+    {
+      "name": "select",
+      "source": "{{values|select('odd')|join(',')}}",
+      "context": {
+        "values": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "1,3",
+      "error": null
+    },
+    {
+      "name": "reject",
+      "source": "{{values|reject('even')|join(',')}}",
+      "context": {
+        "values": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "1,3",
+      "error": null
+    },
+    {
+      "name": "select truth",
+      "source": "{{values|select|join(',')}}",
+      "context": {
+        "values": [
+          0,
+          1,
+          false,
+          2,
+          ""
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "1,2",
+      "error": null
+    },
+    {
+      "name": "select compare",
+      "source": "{{values|select('ge',2)|join(',')}}",
+      "context": {
+        "values": [
+          1,
+          2,
+          3
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "2,3",
+      "error": null
+    },
+    {
+      "name": "selectattr",
+      "source": "{{values|selectattr('active')|map(attribute='name')|join(',')}}",
+      "context": {
+        "values": [
+          {
+            "name": "A",
+            "active": true
+          },
+          {
+            "name": "B",
+            "active": false
+          }
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "A",
+      "error": null
+    },
+    {
+      "name": "rejectattr",
+      "source": "{{values|rejectattr('active','equalto',true)|map(attribute='name')|join(',')}}",
+      "context": {
+        "values": [
+          {
+            "name": "A",
+            "active": true
+          },
+          {
+            "name": "B",
+            "active": false
+          }
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "B",
+      "error": null
+    },
+    {
+      "name": "map filter",
+      "source": "{{values|map('upper')|join(',')}}",
+      "context": {
+        "values": [
+          "abc",
+          "<b>"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "ABC,&lt;B&gt;",
+      "error": null
+    },
+    {
+      "name": "map argument",
+      "source": "{{values|map('default','none')|join(',')}}",
+      "context": {
+        "values": [
+          "abc",
+          "def"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "abc,def",
+      "error": null
+    },
+    {
+      "name": "map nested attribute",
+      "source": "{{values|map(attribute='user.name', default='?')|join(',')}}",
+      "context": {
+        "values": [
+          {
+            "user": {
+              "name": "Ada"
+            }
+          },
+          {
+            "user": {}
+          },
+          {}
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "Ada,?,?",
+      "error": null
+    },
+    {
+      "name": "map index",
+      "source": "{{values|map(attribute='0')|join(',')}}",
+      "context": {
+        "values": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "1,3",
+      "error": null
+    },
+    {
+      "name": "test defined",
+      "source": "{{missing is defined}}/{{value is defined}}/{{value is not defined}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/True/False",
+      "error": null
+    },
+    {
+      "name": "test undefined",
+      "source": "{{missing is undefined}}/{{value is undefined}}/{{value is not undefined}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True/False/True",
+      "error": null
+    },
+    {
+      "name": "test none",
+      "source": "{{missing is none}}/{{value is none}}/{{value is not none}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/False/True",
+      "error": null
+    },
+    {
+      "name": "test string",
+      "source": "{{missing is string}}/{{value is string}}/{{value is not string}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/False/True",
+      "error": null
+    },
+    {
+      "name": "test number",
+      "source": "{{missing is number}}/{{value is number}}/{{value is not number}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/True/False",
+      "error": null
+    },
+    {
+      "name": "test sequence",
+      "source": "{{missing is sequence}}/{{value is sequence}}/{{value is not sequence}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True/False/True",
+      "error": null
+    },
+    {
+      "name": "test mapping",
+      "source": "{{missing is mapping}}/{{value is mapping}}/{{value is not mapping}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/False/True",
+      "error": null
+    },
+    {
+      "name": "test boolean",
+      "source": "{{missing is boolean}}/{{value is boolean}}/{{value is not boolean}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/True/False",
+      "error": null
+    },
+    {
+      "name": "test integer",
+      "source": "{{missing is integer}}/{{value is integer}}/{{value is not integer}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/False/True",
+      "error": null
+    },
+    {
+      "name": "test float",
+      "source": "{{missing is float}}/{{value is float}}/{{value is not float}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/False/True",
+      "error": null
+    },
+    {
+      "name": "test true",
+      "source": "{{missing is true}}/{{value is true}}/{{value is not true}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/True/False",
+      "error": null
+    },
+    {
+      "name": "test false",
+      "source": "{{missing is false}}/{{value is false}}/{{value is not false}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/False/True",
+      "error": null
+    },
+    {
+      "name": "test iterable",
+      "source": "{{missing is iterable}}/{{value is iterable}}/{{value is not iterable}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True/False/True",
+      "error": null
+    },
+    {
+      "name": "test escaped",
+      "source": "{{missing is escaped}}/{{value is escaped}}/{{value is not escaped}}",
+      "context": {
+        "value": true
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/False/True",
+      "error": null
+    },
+    {
+      "name": "test even",
+      "source": "{{value is even}}",
+      "context": {
+        "value": 4
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True",
+      "error": null
+    },
+    {
+      "name": "test odd",
+      "source": "{{value is odd}}",
+      "context": {
+        "value": -3
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True",
+      "error": null
+    },
+    {
+      "name": "test lower",
+      "source": "{{value is lower}}",
+      "context": {
+        "value": "hello"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True",
+      "error": null
+    },
+    {
+      "name": "test upper",
+      "source": "{{value is upper}}",
+      "context": {
+        "value": "HI"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True",
+      "error": null
+    },
+    {
+      "name": "test arguments",
+      "source": "{{value is divisibleby(3)}}/{{value is equalto(6)}}",
+      "context": {
+        "value": 6
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "True/True",
+      "error": null
+    },
+    {
+      "name": "test precedence",
+      "source": "{{not value is odd}}/{{(value + 1) is even}}",
+      "context": {
+        "value": 3
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "False/True",
+      "error": null
+    },
+    {
+      "name": "filter precedence",
+      "source": "{{-value|abs}}/{{2 + value|abs}}",
+      "context": {
+        "value": -3
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "3/5",
+      "error": null
+    },
+    {
+      "name": "safe escaping idempotent",
+      "source": "{{value|safe|escape}}",
+      "context": {
+        "value": "<b>&amp;</b>"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>&amp;</b>",
+      "error": null
+    },
+    {
+      "name": "untrusted escape idempotent",
+      "source": "{{value|escape|escape}}",
+      "context": {
+        "value": "<b>&</b>"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;b&gt;&amp;&lt;/b&gt;",
+      "error": null
+    },
+    {
+      "name": "safe assignment",
+      "source": "{% set x = value|safe %}{{x}}",
+      "context": {
+        "value": "<b>&</b>"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>&</b>",
+      "error": null
+    },
+    {
+      "name": "safe concat left",
+      "source": "{{(a|safe) ~ b}}",
+      "context": {
+        "a": "<b>",
+        "b": "<i>&"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>&lt;i&gt;&amp;",
+      "error": null
+    },
+    {
+      "name": "safe concat right",
+      "source": "{{a ~ (b|safe)}}",
+      "context": {
+        "a": "<b>&",
+        "b": "<i>"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;b&gt;&amp;<i>",
+      "error": null
+    },
+    {
+      "name": "safe addition",
+      "source": "{{(a|safe) + b}}",
+      "context": {
+        "a": "<b>",
+        "b": "<i>&"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>&lt;i&gt;&amp;",
+      "error": null
+    },
+    {
+      "name": "escaped concat",
+      "source": "{{(a|e) ~ b}}",
+      "context": {
+        "a": "<b>",
+        "b": "<i>"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;b&gt;&lt;i&gt;",
+      "error": null
+    },
+    {
+      "name": "safe map join",
+      "source": "{{values|map('safe')|join('<>')}}",
+      "context": {
+        "values": [
+          "<b>",
+          "<i>"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>&lt;&gt;<i>",
+      "error": null
+    },
+    {
+      "name": "safe separator join",
+      "source": "{{values|join('<>'|safe)}}",
+      "context": {
+        "values": [
+          "<b>",
+          "<i>"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "&lt;b&gt;<>&lt;i&gt;",
+      "error": null
+    },
+    {
+      "name": "map safe first",
+      "source": "{{values|map('safe')|first}}",
+      "context": {
+        "values": [
+          "<b>",
+          "<i>"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>",
+      "error": null
+    },
+    {
+      "name": "safe list reverse sort",
+      "source": "{{values|map('safe')|list|reverse|sort|join(',')}}",
+      "context": {
+        "values": [
+          "<b>",
+          "<a>"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<a>,<b>",
+      "error": null
+    },
+    {
+      "name": "safe loop",
+      "source": "{% for x in values|map('safe') %}{{x}}{% endfor %}",
+      "context": {
+        "values": [
+          "<b>",
+          "<i>"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b><i>",
+      "error": null
+    },
+    {
+      "name": "safe string",
+      "source": "{{value|safe|string}}",
+      "context": {
+        "value": "<b>"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>",
+      "error": null
+    },
+    {
+      "name": "disabled escape",
+      "source": "{{value}}/{{value|escape}}",
+      "context": {
+        "value": "<b>"
+      },
+      "strict": false,
+      "autoescape": false,
+      "expected": "<b>/&lt;b&gt;",
+      "error": null
+    },
+    {
+      "name": "autoescape nested",
+      "source": "{% autoescape false %}{{value}}{% autoescape true %}{{value}}{% endautoescape %}{{value}}{% endautoescape %}{{value}}",
+      "context": {
+        "value": "<b>"
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "<b>&lt;b&gt;<b>&lt;b&gt;",
+      "error": null
+    },
+    {
+      "name": "autoescape scope",
+      "source": "{% set x = 1 %}{% autoescape false %}{% set x = 2 %}{{x}}{% endautoescape %}{{x}}",
+      "context": {},
+      "strict": false,
+      "autoescape": true,
+      "expected": "21",
+      "error": null
+    },
+    {
+      "name": "strict default",
+      "source": "{{missing|default('ok')}}",
+      "context": {},
+      "strict": true,
+      "autoescape": true,
+      "expected": "ok",
+      "error": null
+    },
+    {
+      "name": "strict tests",
+      "source": "{{missing is defined}}/{{missing is undefined}}/{{missing is none}}",
+      "context": {},
+      "strict": true,
+      "autoescape": true,
+      "expected": "False/True/False",
+      "error": null
+    },
+    {
+      "name": "strict error {{missing}}",
+      "source": "{{missing}}",
+      "context": {},
+      "strict": true,
+      "autoescape": true,
+      "expected": null,
+      "error": "UndefinedError"
+    },
+    {
+      "name": "strict error {% if missing %}yes{% endif %}",
+      "source": "{% if missing %}yes{% endif %}",
+      "context": {},
+      "strict": true,
+      "autoescape": true,
+      "expected": null,
+      "error": "UndefinedError"
+    },
+    {
+      "name": "strict error {{missing == none}}",
+      "source": "{{missing == none}}",
+      "context": {},
+      "strict": true,
+      "autoescape": true,
+      "expected": null,
+      "error": "UndefinedError"
+    },
+    {
+      "name": "strict error {{missing|length}}",
+      "source": "{{missing|length}}",
+      "context": {},
+      "strict": true,
+      "autoescape": true,
+      "expected": null,
+      "error": "UndefinedError"
+    },
+    {
+      "name": "strict error {% for x in missing %}x{% endfor %}",
+      "source": "{% for x in missing %}x{% endfor %}",
+      "context": {},
+      "strict": true,
+      "autoescape": true,
+      "expected": null,
+      "error": "UndefinedError"
+    },
+    {
+      "name": "tojson",
+      "source": "{{value|tojson}}",
+      "context": {
+        "value": {
+          "z": "</script> & '",
+          "a": [
+            1,
+            true,
+            null
+          ]
+        }
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": "{\"a\": [1, true, null], \"z\": \"\\u003c/script\\u003e \\u0026 \\u0027\"}",
+      "error": null
+    },
+    {
+      "name": "unknown filter",
+      "source": "{{value|unknown}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TemplateAssertionError"
+    },
+    {
+      "name": "unknown test",
+      "source": "{{value is unknown}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TemplateAssertionError"
+    },
+    {
+      "name": "replace arity",
+      "source": "{{value|replace('a')}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "unknown keyword",
+      "source": "{{value|sort(typo=true)}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "duplicate keyword",
+      "source": "{{value|join(\"a\",d=\"b\")}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "bad type",
+      "source": "{{value|join(12)}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "round method",
+      "source": "{{value|round(0,'broken')}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "FilterArgumentError"
+    },
+    {
+      "name": "round precision",
+      "source": "{{value|round(1.5)}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "test arity",
+      "source": "{{value is defined(1)}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "dictsort type",
+      "source": "{{value|dictsort}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "AttributeError"
+    },
+    {
+      "name": "sort mixed",
+      "source": "{{value|sort|join}}",
+      "context": {
+        "value": [
+          1,
+          "a"
+        ]
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "TypeError"
+    },
+    {
+      "name": "map arguments",
+      "source": "{{value|map|list}}",
+      "context": {
+        "value": 2
+      },
+      "strict": false,
+      "autoescape": true,
+      "expected": null,
+      "error": "FilterArgumentError"
+    }
+  ]
+}
