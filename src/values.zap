@@ -31,6 +31,12 @@ def length(str text) -> int64:
         count = count + 1
     return count
 
+def points(str text) -> list[str]:
+    list[str] result = []
+    for c in text:
+        result.append(str(c))
+    return result
+
 def value(JsonValue data) -> Value:
     return Value(
         data=data,

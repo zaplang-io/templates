@@ -73,21 +73,24 @@ def _scan(str source) -> list[Segment]:
     auto source_length = values.length(source)
     if source_length > 1048576:
         _fail(0, "source exceeds 1048576 characters")
+    auto characters = values.points(source)
     list[Segment] result = []
     auto i = 0
     auto start = 0
     auto trim_next = False
     while i < source_length:
-        auto opener = source[i:i + 2]
+        if len(result) > 10000:
+            _fail(i, "template exceeds 10000 segments")
+        auto opener = "".join(characters[i:i + 2])
         if not opener in ["{{", "{%", "{#"]:
             i = i + 1
             continue
-        auto text = source[start:i]
+        auto text = "".join(characters[start:i])
         if trim_next:
             text = text.lstrip()
         auto pos = i
         i = i + 2
-        auto left_trim = i < source_length and source[i:i + 1] == "-"
+        auto left_trim = i < source_length and characters[i] == "-"
         if left_trim:
             text = text.rstrip()
             i = i + 1
@@ -104,7 +107,7 @@ def _scan(str source) -> list[Segment]:
         auto content = i
         auto quote = ""
         while i < source_length:
-            auto c = source[i:i + 1]
+            auto c = characters[i]
             if kind != "comment":
                 if len(quote) > 0:
                     if c == "\\":
@@ -114,22 +117,24 @@ def _scan(str source) -> list[Segment]:
                         quote = ""
                 elif c in ["'", "\""]:
                     quote = c
-                elif source[i:i + 2] == closer:
+                elif "".join(characters[i:i + 2]) == closer:
                     break
-            elif source[i:i + 2] == closer:
+            elif "".join(characters[i:i + 2]) == closer:
                 break
             i = i + 1
         if i >= source_length:
             _fail(pos, "unterminated " + kind)
-        trim_next = i > content and source[i - 1:i] == "-"
+        trim_next = i > content and characters[i - 1] == "-"
         auto end = i
         if trim_next:
             end = end - 1
         if kind != "comment":
-            result.append(Segment(kind=kind, text=source[content:end], pos=content))
+            result.append(
+                Segment(kind=kind, text="".join(characters[content:end]), pos=content),
+            )
         i = i + 2
         start = i
-    auto tail = source[start:]
+    auto tail = "".join(characters[start:])
     if trim_next:
         tail = tail.lstrip()
     if len(tail) > 0:

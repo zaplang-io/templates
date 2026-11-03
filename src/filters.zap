@@ -323,13 +323,14 @@ def _trim(str text, values.Value chars, int64 pos) -> str:
     if _kind(chars) == "none":
         return text.strip()
     auto allowed = _text(chars, pos, "filter trim")
+    auto characters = values.points(text)
     auto first = 0
-    auto last = values.length(text)
-    while first < last and text[first:first + 1] in allowed:
+    auto last = len(characters)
+    while first < last and characters[first] in allowed:
         first = first + 1
-    while last > first and text[last - 1:last] in allowed:
+    while last > first and characters[last - 1] in allowed:
         last = last - 1
-    return text[first:last]
+    return "".join(characters[first:last])
 
 def _replace(
     str text,
@@ -339,55 +340,92 @@ def _replace(
     values.Budget budget,
     int64 pos,
 ) -> str:
+    auto characters = values.points(text)
+    auto pattern = values.points(old)
+    auto size = len(characters)
+    if count == 0:
+        return text
     list[str] chunks = []
-    auto size = values.length(text)
-    auto old_size = values.length(old)
-    auto offset = 0
     auto used = 0
-    auto output_size = 0
-    while offset <= size:
+    auto output = 0
+    auto replacement_size = values.length(replacement)
+    if len(pattern) == 0:
+        for i in range(size + 1):
+            values.tick(budget)
+            if count < 0 or used < count:
+                chunks.append(replacement)
+                used = used + 1
+                output = output + replacement_size
+            if i < size:
+                chunks.append(characters[i])
+                output = output + 1
+            if output > 1048576:
+                values.fail(pos, "filter replace: output exceeds 1048576 characters")
+        return "".join(chunks)
+    # KMP avoids rescanning long nearly-matching prefixes at every position.
+    list[int64] prefix = []
+    for c in pattern:
         values.tick(budget)
-        auto matches = old_size == 0 or text[offset:offset + old_size] == old
-        auto chunk = ""
-        if matches and (count < 0 or used < count):
-            chunk = replacement
+        prefix.append(0)
+    auto matched = 0
+    for i in range(1, len(pattern)):
+        values.tick(budget)
+        while matched > 0 and pattern[i] != pattern[matched]:
+            values.tick(budget)
+            matched = prefix[matched - 1]
+        if pattern[i] == pattern[matched]:
+            matched = matched + 1
+        prefix[i] = matched
+    matched = 0
+    auto last = 0
+    for i in range(size):
+        values.tick(budget)
+        while matched > 0 and characters[i] != pattern[matched]:
+            values.tick(budget)
+            matched = prefix[matched - 1]
+        if characters[i] == pattern[matched]:
+            matched = matched + 1
+        if matched == len(pattern):
+            auto start = i + 1 - len(pattern)
+            chunks.append("".join(characters[last:start]))
+            chunks.append(replacement)
+            output = output + start - last + replacement_size
+            if output > 1048576:
+                values.fail(pos, "filter replace: output exceeds 1048576 characters")
+            last = i + 1
             used = used + 1
-            if old_size > 0:
-                offset = offset + old_size
-            else:
-                chunk = chunk + text[offset:offset + 1]
-                offset = offset + 1
-        else:
-            chunk = text[offset:offset + 1]
-            offset = offset + 1
-        output_size = output_size + values.length(chunk)
-        if output_size > 1048576:
-            values.fail(pos, "filter replace: output exceeds 1048576 characters")
-        chunks.append(chunk)
+            matched = 0
+            if count >= 0 and used >= count:
+                break
+    output = output + size - last
+    if output > 1048576:
+        values.fail(pos, "filter replace: output exceeds 1048576 characters")
+    chunks.append("".join(characters[last:]))
     return "".join(chunks)
 
 def _decimal(str text) -> bool:
-    auto size = values.length(text)
+    auto characters = values.points(text)
+    auto size = len(characters)
     auto i = 0
-    if i < size and text[i:i + 1] in ["+", "-"]:
+    if i < size and characters[i] in ["+", "-"]:
         i = i + 1
     auto digits = 0
-    while i < size and text[i:i + 1] >= "0" and text[i:i + 1] <= "9":
+    while i < size and characters[i] >= "0" and characters[i] <= "9":
         i = i + 1
         digits = digits + 1
-    if i < size and text[i:i + 1] == ".":
+    if i < size and characters[i] == ".":
         i = i + 1
-        while i < size and text[i:i + 1] >= "0" and text[i:i + 1] <= "9":
+        while i < size and characters[i] >= "0" and characters[i] <= "9":
             i = i + 1
             digits = digits + 1
     if digits == 0:
         return False
-    if i < size and text[i:i + 1] in ["e", "E"]:
+    if i < size and characters[i] in ["e", "E"]:
         i = i + 1
-        if i < size and text[i:i + 1] in ["+", "-"]:
+        if i < size and characters[i] in ["+", "-"]:
             i = i + 1
         auto start = i
-        while i < size and text[i:i + 1] >= "0" and text[i:i + 1] <= "9":
+        while i < size and characters[i] >= "0" and characters[i] <= "9":
             i = i + 1
         if start == i:
             return False
@@ -597,7 +635,7 @@ def apply(
             text = text.lower()
         elif name == "title":
             auto beginning = True
-            auto result = ""
+            list[str] result = []
             for c in text:
                 values.tick(budget)
                 auto ch = str(c)
@@ -609,8 +647,8 @@ def apply(
                     else:
                         ch = ch.lower()
                     beginning = False
-                result = result + ch
-            text = result
+                result.append(ch)
+            text = "".join(result)
         elif name == "trim":
             text = _trim(text, _get(args, "chars", JsonValue.Null), pos)
         else:
@@ -724,10 +762,10 @@ def apply(
         return sequence[len(sequence) - 1]
     if name == "reverse":
         if _kind(v) == "string":
-            auto text = ""
+            list[str] chunks = []
             for i in range(len(sequence)):
-                text = text + values.string(sequence[len(sequence) - 1 - i])
-            return values.marked(text, False)
+                chunks.append(values.string(sequence[len(sequence) - 1 - i]))
+            return values.marked("".join(chunks), False)
         list[values.Value] result = []
         for i in range(len(sequence)):
             result.append(sequence[len(sequence) - 1 - i])
